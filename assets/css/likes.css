@@ -1,0 +1,154 @@
+/* assets/css/likes.css */
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  margin-bottom: 2rem;
+  padding-bottom: 1.5rem;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.header-content {
+  display: flex;
+  align-items: flex-end;
+  gap: 1.5rem;
+}
+
+.header-icon {
+  width: 150px;
+  height: 150px;
+  background: linear-gradient(135deg, var(--accent-color), #764ba2);
+  border-radius: 0.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: var(--shadow-lg);
+}
+
+.header-icon i {
+  font-size: 4rem;
+  color: white;
+}
+
+.header-info h1 {
+  font-size: 3rem;
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+  background: linear-gradient(135deg, var(--text-primary), var(--accent-color));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.header-info p {
+  color: var(--text-secondary);
+  font-size: 1rem;
+}
+
+.header-actions {
+  margin-bottom: 1rem;
+}
+
+.play-all-btn {
+  background-color: var(--accent-color);
+  color: white;
+  border: none;
+  padding: 0.75rem 2rem;
+  border-radius: 2rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.play-all-btn:hover {
+  background-color: var(--accent-hover);
+  transform: scale(1.05);
+}
+
+.no-songs {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 400px;
+  text-align: center;
+}
+
+.no-songs-content {
+  color: var(--text-secondary);
+}
+
+.no-songs-content i {
+  margin-bottom: 1rem;
+  color: var(--text-muted);
+  opacity: 0.5;
+}
+
+.no-songs-content h2 {
+  font-size: 1.5rem;
+  margin-bottom: 0.5rem;
+  color: var(--text-primary);
+}
+
+.no-songs-content p {
+  margin-bottom: 2rem;
+}
+
+/* Songs list specific styles for likes page */
+.likes-page .songs-list {
+  background: none;
+  border: none;
+  border-radius: 0;
+}
+
+.likes-page .song-item {
+  background-color: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.likes-page .song-item:hover {
+  background-color: var(--bg-tertiary);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .page-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+  }
+
+  .header-content {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+  }
+
+  .header-icon {
+    width: 100px;
+    height: 100px;
+  }
+
+  .header-icon i {
+    font-size: 2.5rem;
+  }
+
+  .header-info h1 {
+    font-size: 2rem;
+  }
+
+  .header-actions {
+    align-self: stretch;
+  }
+
+  .play-all-btn {
+    width: 100%;
+    justify-content: center;
+  }
+}
