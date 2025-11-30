@@ -112,54 +112,44 @@
   text-overflow: ellipsis;
 }
 
-.songs-list {
-  background-color: var(--bg-secondary);
-  border-radius: 0.75rem;
-  border: 1px solid var(--border-color);
-  overflow: visible; /* Changed from hidden to visible */
-  position: relative;
+/* Song Actions in Cards */
+.song-card .song-actions {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.5rem;
+  z-index: 10;
 }
 
-.song-item {
+.song-card .more-btn {
+  background: rgba(0, 0, 0, 0.7);
+  border: none;
+  border-radius: 50%;
+  width: 2rem;
+  height: 2rem;
+  color: white;
+  cursor: pointer;
+  opacity: 0;
+  transform: scale(0.8);
+  transition: all 0.3s ease;
   display: flex;
   align-items: center;
-  padding: 1rem;
-  border-bottom: 1px solid var(--border-color);
-  transition: background-color 0.2s;
-  position: relative;
-  z-index: 1;
+  justify-content: center;
 }
 
-.song-item:last-child {
-  border-bottom: none;
-}
-
-.song-item:hover {
-  background-color: var(--bg-tertiary);
-  z-index: 100; /* Higher z-index on hover */
-}
-
-.song-item .song-actions {
-  position: relative;
-  margin-left: 1rem;
-}
-
-.song-item .more-btn {
-  opacity: 0.5;
-  transform: scale(1);
-  position: relative;
-  z-index: 101;
-}
-
-.song-item:hover .more-btn {
+.song-card:hover .more-btn {
   opacity: 1;
+  transform: scale(1);
 }
 
-.song-item .dropdown-menu {
+.song-card .more-btn:hover {
+  background: rgba(0, 0, 0, 0.9);
+}
+
+/* Dropdown Menu for Cards */
+.song-card .dropdown-menu {
   position: absolute;
   top: 100%;
-  left: 0;
-  right: auto;
+  right: 0;
   background-color: var(--bg-primary);
   border: 1px solid var(--border-color);
   border-radius: 0.5rem;
@@ -173,12 +163,13 @@
   z-index: 1000;
 }
 
-.song-item .song-actions:hover .dropdown-menu {
+.song-card .song-actions:hover .dropdown-menu {
   opacity: 1;
   visibility: visible;
   transform: translateY(0);
 }
 
+/* Songs List Styles */
 .songs-list {
   background-color: var(--bg-secondary);
   border-radius: 0.75rem;
@@ -206,11 +197,9 @@
   z-index: 100;
 }
 
-/* Fix for song actions in list */
 .song-item .song-actions {
   position: relative;
   margin-left: 1rem;
-  z-index: 101;
 }
 
 .song-item .more-btn {
@@ -218,29 +207,44 @@
   transform: scale(1);
   position: relative;
   z-index: 102;
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+  padding: 0.5rem;
+  border-radius: 0.375rem;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .song-item:hover .more-btn {
   opacity: 1;
+  color: var(--text-primary);
+}
+
+.song-item .more-btn:hover {
+  background-color: var(--bg-tertiary);
 }
 
 /* Ensure dropdown appears above everything */
 .song-item .dropdown-menu {
   position: absolute;
-  top: 100%;
-  left: 0;
-  right: auto;
+  bottom: 100%;
+  right: 0;
   background-color: var(--bg-primary);
   border: 1px solid var(--border-color);
   border-radius: 0.5rem;
   padding: 0.5rem;
-  min-width: 200px;
+  min-width: 220px;
   box-shadow: var(--shadow-lg);
   opacity: 0;
   visibility: hidden;
-  transform: translateY(-10px);
+  transform: translateY(10px);
   transition: all 0.2s ease;
-  z-index: 10000; /* Very high z-index to ensure it's on top */
+  z-index: 10000;
 }
 
 .song-item .song-actions:hover .dropdown-menu {
@@ -264,7 +268,7 @@
   visibility: hidden;
   transform: translateX(-10px);
   transition: all 0.2s ease;
-  z-index: 10001; /* Even higher than parent dropdown */
+  z-index: 10001;
 }
 
 .song-item .dropdown-submenu:hover .submenu {
@@ -273,117 +277,13 @@
   transform: translateX(0);
 }
 
-/* Prevent any parent from clipping the dropdown */
-.songs-list,
-.song-item,
-.main-content,
-.content {
-  overflow: visible !important;
-}
-
-/* Ensure dropdowns don't get cut off */
-.song-item .dropdown-submenu .submenu {
-  position: absolute;
-  left: 100%;
-  top: 0;
-  background-color: var(--bg-primary);
-  border: 1px solid var(--border-color);
-  border-radius: 0.5rem;
-  padding: 0.5rem;
-  min-width: 180px;
-  box-shadow: var(--shadow-lg);
-  opacity: 0;
-  visibility: hidden;
-  transform: translateX(-10px);
-  transition: all 0.2s ease;
-  z-index: 1001;
-}
-
-/* Prevent dropdown from being cut off by container */
-.songs-list {
-  overflow: visible;
-}
-
-.song-item {
-  overflow: visible;
-}
-
-/* Ensure dropdowns stay on top of other elements */
-.song-card,
-.song-item {
-  position: relative;
-  z-index: 1;
-}
-
-.song-card:hover,
-.song-item:hover {
-  z-index: 100;
-}
-
-/* Song Actions */
-.song-actions {
-  position: sticky;
-  top: 0.5rem;
-  left: 0.5rem;
-  z-index: 100;
-}
-
-.more-btn {
-  background: rgba(0, 0, 0, 0.7);
-  border: none;
-  border-radius: 50%;
-  width: 2rem;
-  height: 2rem;
-  color: white;
-  cursor: pointer;
-  opacity: 0;
-  transform: scale(0.8);
-  transition: all 0.3s ease;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 101;
-}
-
-.song-card:hover .more-btn {
-  opacity: 1;
-  transform: scale(1);
-}
-
-.more-btn:hover {
-  background: rgba(0, 0, 0, 0.9);
-}
-
-/* Dropdown Menu */
-.dropdown-menu {
-  position: absolute;
-  top: 100%;
-  right: 0;
-  background-color: var(--bg-primary);
-  border: 1px solid var(--border-color);
-  border-radius: 0.5rem;
-  padding: 0.5rem;
-  min-width: 200px;
-  box-shadow: var(--shadow-lg);
-  opacity: 0;
-  visibility: hidden;
-  transform: translateY(-10px);
-  transition: all 0.2s ease;
-  z-index: 1000;
-}
-
-.song-actions:hover .dropdown-menu {
-  opacity: 1;
-  visibility: visible;
-  transform: translateY(0);
-}
-
+/* Common Dropdown Styles */
 .dropdown-item {
   display: flex;
   align-items: center;
   gap: 0.75rem;
   width: 100%;
-  padding: 0.75rem;
+  padding: 0.75rem 1rem;
   border: none;
   background: none;
   color: var(--text-primary);
@@ -446,31 +346,7 @@
   transform: translateX(0);
 }
 
-/* Songs List */
-.songs-list {
-  background-color: var(--bg-secondary);
-  border-radius: 0.75rem;
-  border: 1px solid var(--border-color);
-  overflow: hidden;
-}
-
-.song-item {
-  display: flex;
-  align-items: center;
-  padding: 1rem;
-  border-bottom: 1px solid var(--border-color);
-  transition: background-color 0.2s;
-  position: relative;
-}
-
-.song-item:last-child {
-  border-bottom: none;
-}
-
-.song-item:hover {
-  background-color: var(--bg-tertiary);
-}
-
+/* Song item specific styles */
 .song-number {
   width: 80px;
   font-size: 0.875rem;
@@ -502,24 +378,13 @@
   color: var(--text-secondary);
 }
 
-.song-item .song-actions {
-  position: relative;
-  margin-left: 1rem;
+/* Like button states */
+.like-song.liked {
+  color: var(--danger-color);
 }
 
-.song-item .more-btn {
-  opacity: 0.5;
-  transform: scale(1);
-}
-
-.song-item:hover .more-btn {
-  opacity: 1;
-}
-
-.song-item .dropdown-menu {
-  right: auto;
-  left: 0;
-  z-index: 1000;
+.like-song.liked i {
+  color: var(--danger-color);
 }
 
 /* Modal */
@@ -674,4 +539,49 @@
     width: 50px;
     font-size: 0.75rem;
   }
+
+  .song-item .dropdown-menu {
+    position: fixed;
+    top: 50% !important;
+    left: 50% !important;
+    transform: translate(-50%, -50%) scale(0.95) !important;
+    min-width: 280px;
+    max-width: 90vw;
+  }
+
+  .song-item .song-actions:hover .dropdown-menu {
+    transform: translate(-50%, -50%) scale(1) !important;
+  }
+
+  .dropdown-submenu .submenu {
+    position: static;
+    transform: none;
+    margin-top: 0.5rem;
+    border: 1px solid var(--border-color);
+  }
+}
+
+/* FIX DROPDOWN VISIBILITY FOR JAVASCRIPT CONTROL */
+.dropdown-menu.show {
+  opacity: 1 !important;
+  visibility: visible !important;
+  transform: translateY(0) !important;
+}
+
+.song-actions .dropdown-menu.show {
+  opacity: 1 !important;
+  visibility: visible !important;
+  transform: translateY(0) !important;
+}
+
+.song-card .dropdown-menu.show {
+  opacity: 1 !important;
+  visibility: visible !important;
+  transform: translateY(0) !important;
+}
+
+.song-item .dropdown-menu.show {
+  opacity: 1 !important;
+  visibility: visible !important;
+  transform: translateY(0) !important;
 }

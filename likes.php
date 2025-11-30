@@ -14,7 +14,7 @@ $database = new Database();
 $conn = $database->getConnection();
 $user_id = $_SESSION['user_id'];
 
-// Get liked songs - FIXED SQL QUERY
+// Get liked songs
 $query = "SELECT s.*, a.name as artist_name, al.title as album_title, g.name as genre_name 
           FROM songs s 
           LEFT JOIN artists a ON s.artist_id = a.id 
@@ -22,7 +22,7 @@ $query = "SELECT s.*, a.name as artist_name, al.title as album_title, g.name as 
           LEFT JOIN genres g ON s.genre_id = g.id 
           WHERE s.id IN (SELECT song_id FROM user_likes WHERE user_id = ?) 
           AND s.is_active = 1 
-          ORDER BY s.created_at DESC"; // Changed from user_likes.created_at to s.created_at
+          ORDER BY s.created_at DESC";
 $stmt = $conn->prepare($query);
 $stmt->execute([$user_id]);
 $liked_songs = $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -75,9 +75,10 @@ $user_playlists = $playlists_stmt->fetchAll(PDO::FETCH_ASSOC);
             </div>
 
             <?php if (count($liked_songs) > 0): ?>
-            <div class="songs-list">
-                <?php foreach ($liked_songs as $song): ?>
+            <div class="songs-list" id="likedSongsList">
+                <?php foreach ($liked_songs as $index => $song): ?>
                 <div class="song-item" data-song-id="<?php echo $song['id']; ?>">
+                    <div class="song-number"><?php echo $index + 1; ?></div>
                     <div class="song-cover">
                         <img src="<?php echo getCoverPath($song['cover_image'], 'song'); ?>" 
                              alt="<?php echo htmlspecialchars($song['title']); ?>">
@@ -88,10 +89,6 @@ $user_playlists = $playlists_stmt->fetchAll(PDO::FETCH_ASSOC);
                     <div class="song-info">
                         <h4><?php echo htmlspecialchars($song['title']); ?></h4>
                         <p><?php echo htmlspecialchars($song['artist_name']); ?></p>
-                        <div class="song-meta">
-                            <span class="album"><?php echo htmlspecialchars($song['album_title'] ?? 'Single'); ?></span>
-                            <span class="genre"><?php echo htmlspecialchars($song['genre_name'] ?? 'Unknown'); ?></span>
-                        </div>
                     </div>
                     <div class="song-duration"><?php echo formatDuration($song['duration']); ?></div>
                     <div class="song-actions">
@@ -176,54 +173,7 @@ $user_playlists = $playlists_stmt->fetchAll(PDO::FETCH_ASSOC);
 
     <script src="assets/js/main.js"></script>
     <script src="assets/js/player.js"></script>
-    <script>
-    // Play all liked songs
-    document.getElementById('playAllLiked')?.addEventListener('click', function() {
-        const songIds = Array.from(document.querySelectorAll('.song-item[data-song-id]'))
-            .map(item => item.getAttribute('data-song-id'));
-        
-        if (songIds.length > 0 && window.musicPlayer) {
-            // Clear current queue and add all liked songs
-            window.musicPlayer.clearQueue();
-            
-            // Add first song and play
-            playSongFromCard(songIds[0]);
-            
-            // Add remaining songs to queue
-            songIds.slice(1).forEach(songId => {
-                addSongToQueue(songId);
-            });
-            
-            showNotification('Playing all liked songs');
-        }
-    });
-
-    async function playSongFromCard(songId) {
-        try {
-            const response = await fetch(`api/songs.php?id=${songId}`);
-            const data = await response.json();
-            
-            if (data.success && window.musicPlayer) {
-                window.musicPlayer.playSong(data.song);
-            }
-        } catch (error) {
-            console.error('Error playing song:', error);
-            showNotification('Error playing song', 'error');
-        }
-    }
-
-    async function addSongToQueue(songId) {
-        try {
-            const response = await fetch(`api/songs.php?id=${songId}`);
-            const data = await response.json();
-            
-            if (data.success && window.musicPlayer) {
-                window.musicPlayer.addToQueue(data.song);
-            }
-        } catch (error) {
-            console.error('Error adding to queue:', error);
-        }
-    }
-    </script>
+    <script src="assets/js/likes.js"></script>
+    
 </body>
 </html>

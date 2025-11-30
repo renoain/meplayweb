@@ -44,6 +44,12 @@ $query = "SELECT id, title FROM playlists WHERE user_id = ?";
 $playlists_stmt = $conn->prepare($query);
 $playlists_stmt->execute([$user_id]);
 $user_playlists = $playlists_stmt->fetchAll(PDO::FETCH_ASSOC);
+
+// Check liked status for songs
+$liked_songs_query = "SELECT song_id FROM user_likes WHERE user_id = ?";
+$liked_stmt = $conn->prepare($liked_songs_query);
+$liked_stmt->execute([$user_id]);
+$liked_songs = $liked_stmt->fetchAll(PDO::FETCH_COLUMN);
 ?>
 
 <!DOCTYPE html>
@@ -66,14 +72,16 @@ $user_playlists = $playlists_stmt->fetchAll(PDO::FETCH_ASSOC);
         
         <div class="content">
             <div class="welcome-section">
-                <h1>Welcome back, <?php echo $_SESSION['username']; ?>!</h1>
+                <h1>Welcome back, <?php echo htmlspecialchars($_SESSION['username']); ?>!</h1>
                 <p>Discover new music and enjoy your favorites</p>
             </div>
 
             <section class="section">
                 <h2>Recently Added</h2>
                 <div class="songs-grid">
-                    <?php while($song = $recent_songs_stmt->fetch(PDO::FETCH_ASSOC)): ?>
+                    <?php while($song = $recent_songs_stmt->fetch(PDO::FETCH_ASSOC)): 
+                        $is_liked = in_array($song['id'], $liked_songs);
+                    ?>
                     <div class="song-card" data-song-id="<?php echo $song['id']; ?>">
                         <div class="song-cover">
                             <img src="<?php echo getCoverPath($song['cover_image'], 'song'); ?>" alt="<?php echo htmlspecialchars($song['title']); ?>">
@@ -86,13 +94,13 @@ $user_playlists = $playlists_stmt->fetchAll(PDO::FETCH_ASSOC);
                             <p><?php echo htmlspecialchars($song['artist_name']); ?></p>
                         </div>
                         <div class="song-actions">
-                            <button class="more-btn">
-                                <i class="fas fa-ellipsis-v"></i>
-                            </button>
-                            <div class="dropdown-menu">
-                                <button class="dropdown-item like-song" data-song-id="<?php echo $song['id']; ?>">
-                                    <i class="far fa-heart"></i> Like
+                                <button class="more-btn">
+                                    <i class="fas fa-ellipsis-v"></i>
                                 </button>
+                                <div class="dropdown-menu">
+                                    <button class="dropdown-item like-song" data-song-id="<?php echo $song['id']; ?>">
+                                        <i class="far fa-heart"></i> Like
+                                    </button>
                                 <button class="dropdown-item add-to-queue" data-song-id="<?php echo $song['id']; ?>">
                                     <i class="fas fa-list"></i> Add to Queue
                                 </button>
@@ -128,7 +136,9 @@ $user_playlists = $playlists_stmt->fetchAll(PDO::FETCH_ASSOC);
             <section class="section">
                 <h2>Popular Songs</h2>
                 <div class="songs-list">
-                    <?php while($song = $popular_songs_stmt->fetch(PDO::FETCH_ASSOC)): ?>
+                    <?php while($song = $popular_songs_stmt->fetch(PDO::FETCH_ASSOC)): 
+                        $is_liked = in_array($song['id'], $liked_songs);
+                    ?>
                     <div class="song-item" data-song-id="<?php echo $song['id']; ?>">
                         <div class="song-number"><?php echo $song['play_count']; ?> plays</div>
                         <div class="song-info">
@@ -141,8 +151,10 @@ $user_playlists = $playlists_stmt->fetchAll(PDO::FETCH_ASSOC);
                                 <i class="fas fa-ellipsis-v"></i>
                             </button>
                             <div class="dropdown-menu">
-                                <button class="dropdown-item like-song" data-song-id="<?php echo $song['id']; ?>">
-                                    <i class="far fa-heart"></i> Like
+                                <button class="dropdown-item like-song <?php echo $is_liked ? 'liked' : ''; ?>" 
+                                        data-song-id="<?php echo $song['id']; ?>">
+                                    <i class="<?php echo $is_liked ? 'fas' : 'far'; ?> fa-heart"></i> 
+                                    <?php echo $is_liked ? 'Unlike' : 'Like'; ?>
                                 </button>
                                 <button class="dropdown-item add-to-queue" data-song-id="<?php echo $song['id']; ?>">
                                     <i class="fas fa-list"></i> Add to Queue
@@ -210,6 +222,5 @@ $user_playlists = $playlists_stmt->fetchAll(PDO::FETCH_ASSOC);
     <script src="assets/js/main.js"></script>
     <script src="assets/js/player.js"></script>
     <script src="assets/js/likes.js"></script>
-    <script src="assets/js/playlists.js"></script>
 </body>
 </html>

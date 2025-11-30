@@ -284,7 +284,9 @@ class MePlayApp {
     }
   }
 
-  /**Modal Management */
+  /**
+   * Modal Management
+   */
   initModals() {
     // Create Playlist Modal
     const createPlaylistModal = document.getElementById("createPlaylistModal");
@@ -504,9 +506,7 @@ class MePlayApp {
       const suggestionsHTML = results
         .map(
           (song) => `
-                <a href="search.php?q=${encodeURIComponent(
-                  query
-                )}" class="suggestion-item">
+                <a href="song.php?id=${song.id}" class="suggestion-item">
                     <img src="${this.getSongCover(song.cover_image)}" 
                          alt="${this.escapeHtml(song.title)}">
                     <div class="suggestion-info">
@@ -547,7 +547,9 @@ class MePlayApp {
 
   getSongCover(cover_image) {
     if (cover_image && cover_image !== "default-cover.png") {
-      return "uploads/covers/" + cover_image;
+      return cover_image.startsWith("uploads/")
+        ? cover_image
+        : "uploads/covers/" + cover_image;
     }
     return "assets/images/covers/default-cover.png";
   }
@@ -611,12 +613,11 @@ class MePlayApp {
         this.addToQueue(songId);
       }
 
-      if (e.target.closest(".like-song")) {
-        e.preventDefault();
-        const button = e.target.closest(".like-song");
-        const songId = button.getAttribute("data-song-id");
-        this.toggleLike(songId, button);
-      }
+      // Like functionality is now handled by LikesManager
+      // if (e.target.closest(".like-song")) {
+      //   e.preventDefault();
+      //   // Let LikesManager handle this
+      // }
 
       if (e.target.closest(".add-to-playlist")) {
         e.preventDefault();
@@ -644,7 +645,8 @@ class MePlayApp {
       if (
         songItem &&
         !e.target.closest(".song-actions") &&
-        !e.target.closest(".play-btn")
+        !e.target.closest(".play-btn") &&
+        !e.target.closest(".like-song")
       ) {
         const songId = songItem.getAttribute("data-song-id");
         this.playSong(songId);
@@ -660,6 +662,59 @@ class MePlayApp {
     document.addEventListener("playerStateChanged", (e) => {
       this.handlePlayerStateChange(e.detail);
     });
+
+    // Listen for like updates from LikesManager
+    document.addEventListener("likeUpdated", (e) => {
+      this.handleLikeUpdate(e.detail);
+    });
+  }
+
+  handleLikeUpdate(detail) {
+    const { songId, isLiked } = detail;
+
+    // Update all like buttons for this song
+    this.updateAllLikeButtonsForSong(songId, isLiked);
+
+    // Update player like button if this is the current song
+    if (
+      window.musicPlayer &&
+      window.musicPlayer.currentSong &&
+      window.musicPlayer.currentSong.id == songId
+    ) {
+      this.updatePlayerLikeButton(isLiked);
+    }
+  }
+
+  updateAllLikeButtonsForSong(songId, isLiked) {
+    // Update all like buttons for this song on the page
+    document
+      .querySelectorAll(`.like-song[data-song-id="${songId}"]`)
+      .forEach((button) => {
+        this.updateLikeButton(button, isLiked);
+      });
+  }
+
+  updateLikeButton(button, isLiked) {
+    if (isLiked) {
+      button.innerHTML = '<i class="fas fa-heart"></i> Unlike';
+      button.classList.add("liked");
+    } else {
+      button.innerHTML = '<i class="far fa-heart"></i> Like';
+      button.classList.remove("liked");
+    }
+  }
+
+  updatePlayerLikeButton(isLiked) {
+    const playerLikeBtn = document.getElementById("nowPlayingLike");
+    if (playerLikeBtn) {
+      if (isLiked) {
+        playerLikeBtn.innerHTML = '<i class="fas fa-heart"></i>';
+        playerLikeBtn.classList.add("liked");
+      } else {
+        playerLikeBtn.innerHTML = '<i class="far fa-heart"></i>';
+        playerLikeBtn.classList.remove("liked");
+      }
+    }
   }
 
   async addToQueue(songId) {
@@ -691,56 +746,6 @@ class MePlayApp {
       console.error("Error playing song:", error);
       showNotification("Error playing song", "error");
     }
-  }
-
-  async toggleLike(songId, button) {
-    try {
-      const isLiked = button.classList.contains("liked");
-      const action = isLiked ? "unlike" : "like";
-
-      const response = await fetch("api/likes.php", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          song_id: songId,
-          action: action,
-        }),
-      });
-
-      const data = await response.json();
-
-      if (data.success) {
-        button.classList.toggle("liked");
-        const icon = button.querySelector("i");
-        if (icon) {
-          icon.className = isLiked ? "far fa-heart" : "fas fa-heart";
-        }
-
-        showNotification(
-          isLiked ? "Removed from liked songs" : "Added to liked songs"
-        );
-
-        // Update like count if displayed
-        this.updateLikeCount(songId, data.new_count);
-      } else {
-        showNotification(data.message || "Error updating like", "error");
-      }
-    } catch (error) {
-      console.error("Like error:", error);
-      showNotification("Error updating like", "error");
-    }
-  }
-
-  updateLikeCount(songId, newCount) {
-    // Update like count in UI if displayed
-    const likeCountElements = document.querySelectorAll(
-      `[data-song-id="${songId}"] .like-count`
-    );
-    likeCountElements.forEach((element) => {
-      element.textContent = newCount;
-    });
   }
 
   async addToPlaylist(songId, playlistId) {
@@ -915,34 +920,6 @@ function handleDropdownPositioning() {
         dropdown.classList.add("dropdown-right");
         dropdown.classList.remove("dropdown-left");
       }
-    }
-
-    function showNotification(message, type = "success") {
-      const notification = document.createElement("div");
-      notification.className = `notification notification-${type}`;
-      notification.innerHTML = `
-        <div class="notification-content">
-            <i class="fas fa-${
-              type === "success" ? "check" : "exclamation"
-            }-circle"></i>
-            <span>${message}</span>
-        </div>
-    `;
-
-      document.body.appendChild(notification);
-
-      // Tampilkan notifikasi
-      setTimeout(() => notification.classList.add("show"), 100);
-
-      // Hapus notifikasi setelah 3 detik
-      setTimeout(() => {
-        notification.classList.remove("show");
-        setTimeout(() => {
-          if (notification.parentNode) {
-            notification.parentNode.removeChild(notification);
-          }
-        }, 300);
-      }, 3000);
     }
 
     // Handle submenu positioning

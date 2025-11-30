@@ -1,3 +1,5 @@
+// assets/js/player.js
+
 class MusicPlayer {
   constructor() {
     if (MusicPlayer.instance) {
@@ -16,7 +18,6 @@ class MusicPlayer {
     this.isSeeking = false;
     this.isVolumeDragging = false;
 
-    // Initialize only if audio element exists
     if (this.audio) {
       this.init();
     }
@@ -29,31 +30,7 @@ class MusicPlayer {
     this.loadPlayerState();
     this.updateDisplay();
     this.setVolume(this.volume);
-
-    // Restore playback state immediately
     this.restorePlaybackState();
-  }
-
-  restorePlaybackState() {
-    const savedState = localStorage.getItem("musicPlayerState");
-    if (savedState) {
-      const state = JSON.parse(savedState);
-      if (state.currentSong) {
-        // Set current time if available
-        if (state.currentTime && this.audio.readyState > 0) {
-          this.audio.currentTime = state.currentTime;
-        }
-
-        // Auto-play if was playing
-        if (state.isPlaying && this.audio.src) {
-          setTimeout(() => {
-            this.audio.play().catch((error) => {
-              console.log("Auto-play prevented:", error);
-            });
-          }, 500);
-        }
-      }
-    }
   }
 
   setupEventListeners() {
@@ -170,57 +147,79 @@ class MusicPlayer {
       this.savePlayerState();
     });
 
-    // Handle page visibility changes
-    document.addEventListener("visibilitychange", () => {
-      if (!document.hidden && this.isPlaying && this.audio.paused) {
-        this.audio.play().catch(console.error);
-      }
+    // Listen for like updates from LikesManager
+    document.addEventListener("likeUpdated", (e) => {
+      this.handleLikeUpdate(e.detail);
     });
   }
 
-  onCanPlay() {
-    // Auto-play if was playing before
-    const savedState = localStorage.getItem("musicPlayerState");
-    if (savedState) {
-      const state = JSON.parse(savedState);
-      if (state.isPlaying && this.audio.src === state.audioSrc) {
-        this.audio.play().catch((error) => {
-          console.log("Auto-play on canplay prevented:", error);
-        });
+  handleLikeUpdate(detail) {
+    const { songId, isLiked } = detail;
+
+    // Update player like button if this is the current song
+    if (this.currentSong && this.currentSong.id == songId) {
+      this.updatePlayerLikeButton(isLiked);
+    }
+  }
+
+  updatePlayerLikeButton(isLiked) {
+    const playerLikeBtn = document.getElementById("nowPlayingLike");
+    if (playerLikeBtn) {
+      if (isLiked) {
+        playerLikeBtn.innerHTML = '<i class="fas fa-heart"></i>';
+        playerLikeBtn.classList.add("liked");
+      } else {
+        playerLikeBtn.innerHTML = '<i class="far fa-heart"></i>';
+        playerLikeBtn.classList.remove("liked");
       }
     }
   }
 
-  // Seeking functionality
-  startSeeking(e) {
-    this.isSeeking = true;
-    this.seek(e);
-  }
+  async toggleLike() {
+    if (!this.currentSong) return;
 
-  dragSeeking(e) {
-    if (this.isSeeking) {
-      this.seek(e);
+    const likeButton = document.getElementById("nowPlayingLike");
+    const isLiked = likeButton.classList.contains("liked");
+
+    try {
+      const response = await fetch("api/likes.php", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          song_id: this.currentSong.id,
+          action: isLiked ? "unlike" : "like",
+        }),
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        // Update player button
+        if (isLiked) {
+          likeButton.innerHTML = '<i class="far fa-heart"></i>';
+          likeButton.classList.remove("liked");
+        } else {
+          likeButton.innerHTML = '<i class="fas fa-heart"></i>';
+          likeButton.classList.add("liked");
+        }
+
+        // Update all other like buttons for this song
+        if (window.likesManager) {
+          window.likesManager.updateLikeButtons(this.currentSong.id, !isLiked);
+        }
+
+        showNotification(
+          isLiked ? "Removed from liked songs" : "Added to liked songs"
+        );
+      } else {
+        showNotification(data.message || "Error updating like", "error");
+      }
+    } catch (error) {
+      console.error("Like error:", error);
+      showNotification("Error updating like", "error");
     }
-  }
-
-  stopSeeking() {
-    this.isSeeking = false;
-  }
-
-  // Volume drag functionality
-  startVolumeDrag(e) {
-    this.isVolumeDragging = true;
-    this.setVolumeFromClick(e);
-  }
-
-  dragVolume(e) {
-    if (this.isVolumeDragging) {
-      this.setVolumeFromClick(e);
-    }
-  }
-
-  stopVolumeDrag() {
-    this.isVolumeDragging = false;
   }
 
   async playSong(song) {
@@ -232,10 +231,8 @@ class MusicPlayer {
         ? song.audio_file
         : `uploads/audio/${song.audio_file}`;
 
-      // Only change source if it's different
       if (this.audio.src !== audioPath) {
         this.audio.src = audioPath;
-        // Wait for the audio to load
         await new Promise((resolve) => {
           this.audio.addEventListener("loadedmetadata", resolve, {
             once: true,
@@ -254,13 +251,61 @@ class MusicPlayer {
       console.error("Play failed:", error);
       showNotification("Error playing song", "error");
 
-      // Auto play next song if current fails
       if (this.queue.length > 1) {
         setTimeout(() => this.next(), 2000);
       }
     }
   }
 
+  updateNowPlaying() {
+    if (!this.currentSong) {
+      const titleEl = document.getElementById("nowPlayingTitle");
+      const artistEl = document.getElementById("nowPlayingArtist");
+      const coverEl = document.getElementById("nowPlayingCover");
+
+      if (titleEl) titleEl.textContent = "Tidak ada lagu";
+      if (artistEl) artistEl.textContent = "Pilih lagu untuk diputar";
+      if (coverEl) coverEl.src = "assets/images/covers/default-cover.png";
+      return;
+    }
+
+    const titleEl = document.getElementById("nowPlayingTitle");
+    const artistEl = document.getElementById("nowPlayingArtist");
+    const coverEl = document.getElementById("nowPlayingCover");
+
+    if (titleEl) titleEl.textContent = this.currentSong.title;
+    if (artistEl) artistEl.textContent = this.currentSong.artist_name;
+
+    if (coverEl) {
+      const cover = this.currentSong.cover_image
+        ? this.currentSong.cover_image.startsWith("uploads/covers/")
+          ? this.currentSong.cover_image
+          : "uploads/covers/" + this.currentSong.cover_image
+        : "assets/images/covers/default-cover.png";
+      coverEl.src = cover;
+    }
+
+    this.checkLikeStatus();
+  }
+
+  async checkLikeStatus() {
+    if (!this.currentSong) return;
+
+    try {
+      const response = await fetch(
+        `api/likes.php?song_id=${this.currentSong.id}`
+      );
+      const data = await response.json();
+
+      if (data.success) {
+        this.updatePlayerLikeButton(data.is_liked);
+      }
+    } catch (error) {
+      console.error("Error checking like status:", error);
+    }
+  }
+
+  // ... (rest of the existing player methods remain the same)
   togglePlay() {
     if (!this.currentSong || !this.audio) {
       if (this.queue.length > 0) {
@@ -313,7 +358,6 @@ class MusicPlayer {
       nextIndex = this.currentIndex + 1;
     }
 
-    // If shuffle is enabled, get random song
     if (this.isShuffled && this.queue.length > 1) {
       let newIndex;
       do {
@@ -322,12 +366,10 @@ class MusicPlayer {
       nextIndex = newIndex;
     }
 
-    // Check if we've reached the end
     if (nextIndex >= this.queue.length) {
       if (this.repeatMode === "all") {
         nextIndex = 0;
       } else {
-        // Stop playback if no repeat and end of queue
         this.stop();
         return;
       }
@@ -428,21 +470,21 @@ class MusicPlayer {
       .map((song, index) => {
         const isCurrent = index === this.currentIndex;
         return `
-                <div class="queue-item ${
-                  isCurrent ? "active" : ""
-                }" data-index="${index}">
-                    <div class="queue-item-info">
-                        <h4>${song.title}</h4>
-                        <p>${song.artist_name}</p>
+                    <div class="queue-item ${
+                      isCurrent ? "active" : ""
+                    }" data-index="${index}">
+                        <div class="queue-item-info">
+                            <h4>${song.title}</h4>
+                            <p>${song.artist_name}</p>
+                        </div>
+                        <div class="queue-item-duration">${this.formatTime(
+                          song.duration
+                        )}</div>
+                        <button class="queue-remove" data-index="${index}">
+                            <i class="fas fa-times"></i>
+                        </button>
                     </div>
-                    <div class="queue-item-duration">${this.formatTime(
-                      song.duration
-                    )}</div>
-                    <button class="queue-remove" data-index="${index}">
-                        <i class="fas fa-times"></i>
-                    </button>
-                </div>
-            `;
+                `;
       })
       .join("");
 
@@ -463,98 +505,6 @@ class MusicPlayer {
         }
       });
     });
-  }
-
-  async toggleLike() {
-    if (!this.currentSong) return;
-
-    const likeButton = document.getElementById("nowPlayingLike");
-    const isLiked = likeButton.classList.contains("liked");
-
-    try {
-      const response = await fetch("api/likes.php", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          song_id: this.currentSong.id,
-          action: isLiked ? "unlike" : "like",
-        }),
-      });
-
-      const data = await response.json();
-
-      if (data.success) {
-        likeButton.classList.toggle("liked");
-        likeButton.innerHTML = isLiked
-          ? '<i class="far fa-heart"></i>'
-          : '<i class="fas fa-heart"></i>';
-        showNotification(
-          isLiked ? "Removed from liked songs" : "Added to liked songs"
-        );
-      } else {
-        showNotification(data.message || "Error updating like", "error");
-      }
-    } catch (error) {
-      console.error("Like error:", error);
-      showNotification("Error updating like", "error");
-    }
-  }
-
-  updateNowPlaying() {
-    if (!this.currentSong) {
-      const titleEl = document.getElementById("nowPlayingTitle");
-      const artistEl = document.getElementById("nowPlayingArtist");
-      const coverEl = document.getElementById("nowPlayingCover");
-
-      if (titleEl) titleEl.textContent = "Tidak ada lagu";
-      if (artistEl) artistEl.textContent = "Pilih lagu untuk diputar";
-      if (coverEl) coverEl.src = "assets/images/covers/default-cover.png";
-      return;
-    }
-
-    const titleEl = document.getElementById("nowPlayingTitle");
-    const artistEl = document.getElementById("nowPlayingArtist");
-    const coverEl = document.getElementById("nowPlayingCover");
-
-    if (titleEl) titleEl.textContent = this.currentSong.title;
-    if (artistEl) artistEl.textContent = this.currentSong.artist_name;
-
-    if (coverEl) {
-      const cover = this.currentSong.cover_image
-        ? this.currentSong.cover_image.startsWith("uploads/covers/")
-          ? this.currentSong.cover_image
-          : "uploads/covers/" + this.currentSong.cover_image
-        : "assets/images/covers/default-cover.png";
-      coverEl.src = cover;
-    }
-
-    this.checkLikeStatus();
-  }
-
-  async checkLikeStatus() {
-    if (!this.currentSong) return;
-
-    try {
-      const response = await fetch(
-        `api/likes.php?song_id=${this.currentSong.id}`
-      );
-      const data = await response.json();
-
-      const likeButton = document.getElementById("nowPlayingLike");
-      if (likeButton) {
-        if (data.is_liked) {
-          likeButton.classList.add("liked");
-          likeButton.innerHTML = '<i class="fas fa-heart"></i>';
-        } else {
-          likeButton.classList.remove("liked");
-          likeButton.innerHTML = '<i class="far fa-heart"></i>';
-        }
-      }
-    } catch (error) {
-      console.error("Error checking like status:", error);
-    }
   }
 
   updatePlayButton() {
@@ -604,13 +554,6 @@ class MusicPlayer {
   }
 
   onEnded() {
-    console.log(
-      "Song ended, repeat mode:",
-      this.repeatMode,
-      "queue length:",
-      this.queue.length
-    );
-
     if (this.repeatMode === "one") {
       this.audio.currentTime = 0;
       this.audio.play();
@@ -717,7 +660,6 @@ class MusicPlayer {
     this.savePlayerState();
   }
 
-  // Fixed time format function
   formatTime(seconds) {
     if (!seconds || isNaN(seconds)) return "0:00";
 
@@ -789,7 +731,6 @@ class MusicPlayer {
         if (this.currentSong && this.audio) {
           this.updateNowPlaying();
 
-          // Set current time immediately if we have the source
           if (
             state.audioSrc &&
             this.audio.src === state.audioSrc &&
@@ -806,83 +747,77 @@ class MusicPlayer {
       console.error("Error loading player state:", error);
     }
   }
+
+  restorePlaybackState() {
+    const savedState = localStorage.getItem("musicPlayerState");
+    if (savedState) {
+      const state = JSON.parse(savedState);
+      if (state.currentSong) {
+        if (state.currentTime && this.audio.readyState > 0) {
+          this.audio.currentTime = state.currentTime;
+        }
+
+        if (state.isPlaying && this.audio.src) {
+          setTimeout(() => {
+            this.audio.play().catch((error) => {
+              console.log("Auto-play prevented:", error);
+            });
+          }, 500);
+        }
+      }
+    }
+  }
+
+  onCanPlay() {
+    const savedState = localStorage.getItem("musicPlayerState");
+    if (savedState) {
+      const state = JSON.parse(savedState);
+      if (state.isPlaying && this.audio.src === state.audioSrc) {
+        this.audio.play().catch((error) => {
+          console.log("Auto-play on canplay prevented:", error);
+        });
+      }
+    }
+  }
+
+  startSeeking(e) {
+    this.isSeeking = true;
+    this.seek(e);
+  }
+
+  dragSeeking(e) {
+    if (this.isSeeking) {
+      this.seek(e);
+    }
+  }
+
+  stopSeeking() {
+    this.isSeeking = false;
+  }
+
+  startVolumeDrag(e) {
+    this.isVolumeDragging = true;
+    this.setVolumeFromClick(e);
+  }
+
+  dragVolume(e) {
+    if (this.isVolumeDragging) {
+      this.setVolumeFromClick(e);
+    }
+  }
+
+  stopVolumeDrag() {
+    this.isVolumeDragging = false;
+  }
 }
 
-// Global player instance - Singleton
+// Global player instance
 let musicPlayer = null;
 
 // Initialize player when DOM is loaded
 document.addEventListener("DOMContentLoaded", () => {
-  // Only create player if audio element exists
   const audioElement = document.getElementById("audioElement");
   if (audioElement) {
     musicPlayer = new MusicPlayer();
   }
-
-  // Add event listeners for play buttons
-  document.querySelectorAll(".play-btn").forEach((button) => {
-    button.addEventListener("click", (e) => {
-      e.stopPropagation();
-      const songCard = button.closest("[data-song-id]");
-      const songId = songCard.getAttribute("data-song-id");
-      playSongFromCard(songId);
-    });
-  });
-
-  // Add event listeners for song items
-  document.querySelectorAll(".song-item").forEach((item) => {
-    item.addEventListener("click", (e) => {
-      if (
-        !e.target.closest(".song-actions") &&
-        !e.target.closest(".play-btn")
-      ) {
-        const songId = item.getAttribute("data-song-id");
-        playSongFromCard(songId);
-      }
-    });
-  });
 });
-
-// Play song from card
-async function playSongFromCard(songId) {
-  try {
-    const response = await fetch(`api/songs.php?id=${songId}`);
-    const data = await response.json();
-
-    if (data.success && musicPlayer) {
-      musicPlayer.playSong(data.song);
-    } else {
-      showNotification("Error loading song", "error");
-    }
-  } catch (error) {
-    console.error("Error playing song:", error);
-    showNotification("Error playing song", "error");
-  }
-}
-
-// Add song to queue
-async function addSongToQueue(songId) {
-  try {
-    const response = await fetch(`api/songs.php?id=${songId}`);
-    const data = await response.json();
-
-    if (data.success && musicPlayer) {
-      musicPlayer.addToQueue(data.song);
-      showNotification("Added to queue");
-    }
-  } catch (error) {
-    console.error("Error adding to queue:", error);
-    showNotification("Error adding to queue", "error");
-  }
-}
-
-// Update global formatDuration function to use the fixed version
-function formatDuration(seconds) {
-  if (!seconds || isNaN(seconds)) return "0:00";
-
-  seconds = Math.floor(seconds);
-  const minutes = Math.floor(seconds / 60);
-  const remainingSeconds = seconds % 60;
-
-  return `${minutes}:${remainingSeconds.toString().padStart(2, "0")}`;
-}

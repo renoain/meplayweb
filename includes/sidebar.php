@@ -84,7 +84,6 @@ if (isset($_SESSION['user_id'])) {
 
         <div class="sidebar-section">
             <div class="section-header">
-                <span>Your Library</span>
                 <button class="create-playlist-btn" id="sidebarCreatePlaylist" title="Create Playlist">
                     <i class="fas fa-plus"></i>
                 </button>
