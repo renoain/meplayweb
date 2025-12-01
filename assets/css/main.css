@@ -1,7 +1,8 @@
 /* assets/css/main.css */
 :root {
   /* Light theme */
-  --bg-primary: #ffffff;
+  --bg-primary: #f5f5f5;
+
   --bg-secondary: #f8f9fa;
   --bg-tertiary: #e9ecef;
   --text-primary: #212529;
@@ -176,7 +177,7 @@ body {
   visibility: hidden;
   transform: translateY(-10px);
   transition: all 0.2s ease;
-  z-index: 1100;
+  z-index: 10001;
 }
 
 .user-menu:hover .dropdown-menu {
@@ -343,6 +344,7 @@ body {
 /* Song Actions Dropdown - Fixed Positioning */
 .song-actions {
   position: relative;
+  z-index: 100;
 }
 
 .song-actions .dropdown-menu {

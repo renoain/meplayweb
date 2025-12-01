@@ -117,7 +117,7 @@
   position: absolute;
   top: 0.5rem;
   right: 0.5rem;
-  z-index: 10;
+  z-index: 10000;
 }
 
 .song-card .more-btn {
@@ -200,6 +200,7 @@
 .song-item .song-actions {
   position: relative;
   margin-left: 1rem;
+  z-index: 10000;
 }
 
 .song-item .more-btn {
