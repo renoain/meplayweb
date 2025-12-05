@@ -400,368 +400,293 @@ if (isset($_GET['success'])) {
     <script src="assets/js/main.js"></script>
     <script src="assets/js/player.js"></script>
     <script src="assets/js/likes.js"></script>
-    <script>
-// SANGAT SIMPLE SOLUTION
-let activeDropdown = null;
-
-// 1. FUNCTION TO CLOSE DROPDOWN
-function closeDropdown() {
-    if (activeDropdown) {
-        activeDropdown.style.display = 'none';
-        activeDropdown = null;
-    }
-}
-
-// 2. CLICK ANYWHERE TO CLOSE DROPDOWN
-document.addEventListener('click', function(e) {
-    // If click is NOT on a dropdown button and NOT inside active dropdown
-    if (!e.target.closest('.more-btn') && !e.target.closest('.song-dropdown') && !e.target.closest('.playlist-dropdown')) {
-        closeDropdown();
-    }
-});
-
-// 3. ESCAPE KEY
-document.addEventListener('keydown', function(e) {
-    if (e.key === 'Escape') {
-        closeDropdown();
-    }
-});
-
-// 4. PLAYLIST DROPDOWN
-document.getElementById('playlistMoreBtn').addEventListener('click', function(e) {
-    e.stopPropagation();
     
-    const dropdown = document.getElementById('playlistDropdown');
+<script>
+// ====== WAIT FOR DOM TO BE READY ======
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('🎵 DOM fully loaded, starting script...');
     
-    // Toggle
-    if (dropdown.style.display === 'block') {
-        dropdown.style.display = 'none';
-        activeDropdown = null;
-    } else {
-        closeDropdown(); // Close any open dropdown first
-        dropdown.style.display = 'block';
-        dropdown.style.position = 'absolute';
-        dropdown.style.top = '45px';
-        dropdown.style.right = '0';
-        activeDropdown = dropdown;
+    // ====== TEST: CHECK ELEMENTS NOW ======
+    console.log('=== ELEMENT CHECK ===');
+    console.log('Remove buttons found:', document.querySelectorAll('.remove-from-playlist').length);
+    console.log('Song items found:', document.querySelectorAll('.song-item').length);
+    
+    // If still 0, there might be another issue
+    const removeButtons = document.querySelectorAll('.remove-from-playlist');
+    const songItems = document.querySelectorAll('.song-item');
+    
+    if (removeButtons.length === 0) {
+        console.error('❌ NO REMOVE BUTTONS FOUND! Checking HTML structure...');
+        
+        // Debug: Check what buttons actually exist
+        console.log('All buttons with class "dropdown-item":', 
+            document.querySelectorAll('.dropdown-item').length);
+        
+        // Check if dropdowns exist
+        document.querySelectorAll('.song-dropdown').forEach((dropdown, i) => {
+            console.log(`Dropdown ${i}:`, {
+                id: dropdown.id,
+                innerHTML: dropdown.innerHTML.substring(0, 100) + '...'
+            });
+        });
+        
+        // Try alternative selector
+        console.log('Buttons with text "Remove":', 
+            document.querySelectorAll('button:contains("Remove")').length);
     }
-});
-
-// 5. SONG DROPDOWNS - SIMPLE LOOP
-document.querySelectorAll('.song-more-btn').forEach(function(button) {
-    button.addEventListener('click', function(e) {
-        e.stopPropagation();
+    
+    // ====== SETUP EVENT LISTENERS ======
+    console.log('=== SETTING UP EVENT LISTENERS ===');
+    
+    // Method 1: Direct event delegation (works even if buttons added later)
+    document.addEventListener('click', function(e) {
+        // Check if any parent element has the class
+        let target = e.target;
+        let removeBtn = null;
         
-        const index = this.getAttribute('data-index');
-        const dropdown = document.getElementById('songDropdown-' + index);
+        // Traverse up to find remove button
+        while (target && target !== document) {
+            if (target.classList && target.classList.contains('remove-from-playlist')) {
+                removeBtn = target;
+                break;
+            }
+            target = target.parentElement;
+        }
         
-        if (!dropdown) return;
+        if (removeBtn) {
+            console.log('🔥 EVENT DELEGATION: Remove button clicked!');
+            e.preventDefault();
+            e.stopPropagation();
+            
+            const songId = removeBtn.getAttribute('data-song-id');
+            const playlistId = removeBtn.getAttribute('data-playlist-id');
+            const songItem = removeBtn.closest('.song-item');
+            
+            console.log('Data:', { songId, playlistId });
+            console.log('Song item:', songItem);
+            
+            // Close dropdown
+            const dropdown = removeBtn.closest('.song-dropdown');
+            if (dropdown) {
+                dropdown.style.display = 'none';
+            }
+            
+            if (confirm('Remove this song from playlist?')) {
+                // Call remove function
+                removeSong(songId, playlistId, songItem);
+            }
+            
+            return false;
+        }
+    });
+    
+    // Method 2: Also add direct listeners to existing buttons
+    removeButtons.forEach((button, index) => {
+        console.log(`Adding listener to button ${index}:`, {
+            songId: button.getAttribute('data-song-id'),
+            playlistId: button.getAttribute('data-playlist-id')
+        });
         
-        // Toggle
-        if (dropdown.style.display === 'block') {
-            dropdown.style.display = 'none';
+        button.addEventListener('click', function(e) {
+            console.log('🔥 DIRECT LISTENER: Remove button clicked!');
+            e.preventDefault();
+            e.stopPropagation();
+            
+            const songId = this.getAttribute('data-song-id');
+            const playlistId = this.getAttribute('data-playlist-id');
+            const songItem = this.closest('.song-item');
+            
+            if (confirm('Remove this song from playlist?')) {
+                removeSong(songId, playlistId, songItem);
+            }
+            
+            return false;
+        });
+    });
+    
+    // ====== REMOVE SONG FUNCTION ======
+    function removeSong(songId, playlistId, songItem) {
+        console.log('🔄 Removing song:', { songId, playlistId });
+        
+        if (!songId || !playlistId) {
+            alert('❌ Invalid data');
+            return;
+        }
+        
+        // Visual feedback
+        if (songItem) {
+            songItem.style.opacity = '0.5';
+            songItem.style.pointerEvents = 'none';
+        }
+        
+        // API call
+        fetch('api/playlists.php', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                action: 'remove_song',
+                song_id: parseInt(songId),
+                playlist_id: parseInt(playlistId)
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            console.log('API Response:', data);
+            
+            if (data.success) {
+                // Animate removal
+                if (songItem) {
+                    songItem.style.transition = 'all 0.3s ease';
+                    
+                    setTimeout(() => {
+                        songItem.style.opacity = '0';
+                        songItem.style.height = '0';
+                        songItem.style.padding = '0';
+                        songItem.style.margin = '0';
+                        songItem.style.overflow = 'hidden';
+                        
+                        setTimeout(() => {
+                            songItem.remove();
+                            
+                            // Update count
+                            const remaining = document.querySelectorAll('.song-item').length;
+                            const countEl = document.querySelector('.playlist-meta span:first-child');
+                            if (countEl) {
+                                countEl.textContent = remaining + ' ' + 
+                                    (remaining === 1 ? 'song' : 'songs');
+                            }
+                            
+                            alert('✅ Song removed successfully!');
+                            
+                            // Reload if empty
+                            if (remaining === 0) {
+                                setTimeout(() => location.reload(), 1000);
+                            }
+                        }, 300);
+                    }, 100);
+                }
+            } else {
+                alert('❌ ' + (data.message || 'Failed to remove song'));
+                if (songItem) {
+                    songItem.style.opacity = '1';
+                    songItem.style.pointerEvents = 'auto';
+                }
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('❌ Network error');
+            if (songItem) {
+                songItem.style.opacity = '1';
+                songItem.style.pointerEvents = 'auto';
+            }
+        });
+    }
+    
+    // ====== TEST API ENDPOINT ======
+    console.log('=== TESTING API ENDPOINT ===');
+    
+    // Quick test
+    setTimeout(() => {
+        fetch('api/playlists.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                action: 'remove_song',
+                song_id: 1,
+                playlist_id: 10
+            })
+        })
+        .then(r => r.json())
+        .then(data => {
+            console.log('✅ API Test Response:', data);
+        });
+    }, 500);
+    
+    // ====== KEEP EXISTING DROPDOWN CODE ======
+    let activeDropdown = null;
+    
+    function closeDropdown() {
+        if (activeDropdown) {
+            activeDropdown.style.display = 'none';
             activeDropdown = null;
-        } else {
-            closeDropdown(); // Close any open dropdown first
-            
-            dropdown.style.display = 'block';
-            dropdown.style.position = 'fixed';
-            
-            // Position it
-            const rect = this.getBoundingClientRect();
-            dropdown.style.top = (rect.bottom + 5) + 'px';
-            dropdown.style.left = (rect.right - dropdown.offsetWidth) + 'px';
-            
-            activeDropdown = dropdown;
+        }
+    }
+    
+    // Click outside to close dropdown
+    document.addEventListener('click', function(e) {
+        if (!e.target.closest('.more-btn') && 
+            !e.target.closest('.song-dropdown') && 
+            !e.target.closest('.playlist-dropdown')) {
+            closeDropdown();
         }
     });
-});
-
-// 6. ACTION BUTTONS - SIMPLE AND DIRECT
-// Remove from playlist - FIXED VERSION
-document.addEventListener('click', function(e) {
-    if (e.target.closest('.remove-from-playlist')) {
-        e.preventDefault();
-        e.stopPropagation();
-        
-        const button = e.target.closest('.remove-from-playlist');
-        const songId = button.getAttribute('data-song-id');
-        const playlistId = button.getAttribute('data-playlist-id');
-        
-        // Close dropdown first
-        closeDropdown();
-        
-        // Confirm
-        if (confirm('Remove this song from playlist?')) {
-            // SIMPLE AJAX REQUEST
-            const xhr = new XMLHttpRequest();
-            xhr.open('POST', 'ajax/remove_from_playlist.php', true);
-            xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+    
+    // Escape key
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') closeDropdown();
+    });
+    
+    // Song dropdown buttons
+    document.querySelectorAll('.song-more-btn').forEach(btn => {
+        btn.addEventListener('click', function(e) {
+            e.stopPropagation();
             
-            xhr.onload = function() {
-                if (xhr.status === 200) {
-                    try {
-                        const response = JSON.parse(xhr.responseText);
-                        if (response.success) {
-                            // Find and remove the song element
-                            const songElements = document.querySelectorAll('.song-item');
-                            songElements.forEach(function(songElement) {
-                                if (songElement.getAttribute('data-song-id') === songId) {
-                                    songElement.remove();
-                                    
-                                    // If no songs left, reload page
-                                    if (document.querySelectorAll('.song-item').length === 0) {
-                                        setTimeout(function() {
-                                            location.reload();
-                                        }, 1000);
-                                    }
-                                }
-                            });
-                        } else {
-                            alert(response.message || 'Failed to remove song');
-                        }
-                    } catch (error) {
-                        console.error('JSON parse error:', error);
-                        alert('Error processing response');
-                    }
-                } else {
-                    alert('Request failed: ' + xhr.status);
-                }
-            };
+            const index = this.getAttribute('data-index');
+            const dropdown = document.getElementById('songDropdown-' + index);
             
-            xhr.onerror = function() {
-                alert('Network error');
-            };
+            if (!dropdown) return;
             
-            xhr.send('song_id=' + encodeURIComponent(songId) + '&playlist_id=' + encodeURIComponent(playlistId));
-        }
-    }
-    
-    // Like song
-    if (e.target.closest('.like-song')) {
-        e.preventDefault();
-        e.stopPropagation();
-        
-        const button = e.target.closest('.like-song');
-        const songId = button.getAttribute('data-song-id');
-        const isLiked = button.classList.contains('liked');
-        
-        closeDropdown();
-        
-        const xhr = new XMLHttpRequest();
-        xhr.open('POST', 'ajax/toggle_like.php', true);
-        xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
-        
-        xhr.onload = function() {
-            if (xhr.status === 200) {
-                try {
-                    const response = JSON.parse(xhr.responseText);
-                    if (response.success) {
-                        if (isLiked) {
-                            button.classList.remove('liked');
-                            button.innerHTML = '<i class="far fa-heart"></i> Like';
-                            alert('Removed from likes');
-                        } else {
-                            button.classList.add('liked');
-                            button.innerHTML = '<i class="fas fa-heart"></i> Unlike';
-                            alert('Added to likes');
-                        }
-                    } else {
-                        alert(response.message || 'Failed to update like');
-                    }
-                } catch (error) {
-                    console.error('JSON parse error:', error);
-                    alert('Error processing response');
-                }
+            if (dropdown.style.display === 'block') {
+                dropdown.style.display = 'none';
+                activeDropdown = null;
             } else {
-                alert('Request failed: ' + xhr.status);
+                closeDropdown();
+                dropdown.style.display = 'block';
+                dropdown.style.position = 'fixed';
+                
+                const rect = this.getBoundingClientRect();
+                dropdown.style.top = (rect.bottom + 5) + 'px';
+                dropdown.style.left = (rect.right - dropdown.offsetWidth) + 'px';
+                
+                activeDropdown = dropdown;
             }
-        };
-        
-        xhr.onerror = function() {
-            alert('Network error');
-        };
-        
-        xhr.send('song_id=' + encodeURIComponent(songId) + '&action=' + (isLiked ? 'unlike' : 'like'));
-    }
-    
-    // Add to queue
-    if (e.target.closest('.add-to-queue')) {
-        e.preventDefault();
-        e.stopPropagation();
-        
-        const button = e.target.closest('.add-to-queue');
-        const songId = button.getAttribute('data-song-id');
-        
-        closeDropdown();
-        
-        const xhr = new XMLHttpRequest();
-        xhr.open('POST', 'ajax/add_to_queue.php', true);
-        xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
-        
-        xhr.onload = function() {
-            if (xhr.status === 200) {
-                try {
-                    const response = JSON.parse(xhr.responseText);
-                    if (response.success) {
-                        alert('Added to queue');
-                    } else {
-                        alert(response.message || 'Failed to add to queue');
-                    }
-                } catch (error) {
-                    console.error('JSON parse error:', error);
-                    alert('Error processing response');
-                }
-            } else {
-                alert('Request failed: ' + xhr.status);
-            }
-        };
-        
-        xhr.onerror = function() {
-            alert('Network error');
-        };
-        
-        xhr.send('song_id=' + encodeURIComponent(songId));
-    }
-    
-    // Add to playlist
-    if (e.target.closest('.add-to-playlist')) {
-        e.preventDefault();
-        e.stopPropagation();
-        
-        const button = e.target.closest('.add-to-playlist');
-        const songId = button.getAttribute('data-song-id');
-        const playlistId = button.getAttribute('data-playlist-id');
-        
-        closeDropdown();
-        
-        const xhr = new XMLHttpRequest();
-        xhr.open('POST', 'ajax/add_to_playlist.php', true);
-        xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
-        
-        xhr.onload = function() {
-            if (xhr.status === 200) {
-                try {
-                    const response = JSON.parse(xhr.responseText);
-                    if (response.success) {
-                        alert('Added to playlist');
-                    } else {
-                        alert(response.message || 'Failed to add to playlist');
-                    }
-                } catch (error) {
-                    console.error('JSON parse error:', error);
-                    alert('Error processing response');
-                }
-            } else {
-                alert('Request failed: ' + xhr.status);
-            }
-        };
-        
-        xhr.onerror = function() {
-            alert('Network error');
-        };
-        
-        xhr.send('song_id=' + encodeURIComponent(songId) + '&playlist_id=' + encodeURIComponent(playlistId));
-    }
-    
-    // Create playlist
-    if (e.target.closest('.create-playlist')) {
-        e.preventDefault();
-        e.stopPropagation();
-        
-        const button = e.target.closest('.create-playlist');
-        const songId = button.getAttribute('data-song-id');
-        
-        closeDropdown();
-        
-        document.getElementById('songIdForPlaylist').value = songId;
-        document.getElementById('createPlaylistModal').classList.add('show');
-    }
-});
-
-// 7. MODAL FUNCTIONS
-document.querySelectorAll('.close-modal').forEach(function(btn) {
-    btn.addEventListener('click', function() {
-        document.querySelectorAll('.modal').forEach(function(modal) {
-            modal.classList.remove('show');
         });
     });
-});
-
-// Edit playlist
-document.getElementById('editPlaylistBtn').addEventListener('click', function(e) {
-    e.stopPropagation();
-    closeDropdown();
-    document.getElementById('editPlaylistModal').classList.add('show');
-});
-
-// Delete playlist
-document.getElementById('deletePlaylistBtn').addEventListener('click', function(e) {
-    e.stopPropagation();
-    closeDropdown();
-    document.getElementById('deletePlaylistModal').classList.add('show');
-});
-
-// 8. PLAY FUNCTIONS
-// Play all
-if (document.getElementById('playPlaylist')) {
-    document.getElementById('playPlaylist').addEventListener('click', function() {
-        const songIds = [];
-        document.querySelectorAll('.song-item').forEach(function(item) {
-            songIds.push(item.getAttribute('data-song-id'));
-        });
-        
-        if (songIds.length > 0) {
-            console.log('Playing all songs:', songIds);
-        }
-    });
-}
-
-// Individual play buttons
-document.querySelectorAll('.play-btn').forEach(function(btn) {
-    btn.addEventListener('click', function(e) {
-        e.stopPropagation();
-        const songId = this.closest('.song-item').getAttribute('data-song-id');
-        console.log('Playing song:', songId);
-    });
-});
-
-// 9. CREATE PLAYLIST FORM
-if (document.getElementById('createPlaylistForm')) {
-    document.getElementById('createPlaylistForm').addEventListener('submit', function(e) {
-        e.preventDefault();
-        
-        const xhr = new XMLHttpRequest();
-        xhr.open('POST', 'ajax/create_playlist.php', true);
-        
-        xhr.onload = function() {
-            if (xhr.status === 200) {
-                try {
-                    const response = JSON.parse(xhr.responseText);
-                    if (response.success) {
-                        alert('Playlist created successfully');
-                        document.getElementById('createPlaylistModal').classList.remove('show');
-                        e.target.reset();
-                    } else {
-                        alert(response.message || 'Failed to create playlist');
-                    }
-                } catch (error) {
-                    console.error('JSON parse error:', error);
-                    alert('Error processing response');
-                }
+    
+    // Playlist dropdown
+    const playlistBtn = document.getElementById('playlistMoreBtn');
+    if (playlistBtn) {
+        playlistBtn.addEventListener('click', function(e) {
+            e.stopPropagation();
+            const dropdown = document.getElementById('playlistDropdown');
+            
+            if (dropdown.style.display === 'block') {
+                dropdown.style.display = 'none';
+                activeDropdown = null;
             } else {
-                alert('Request failed: ' + xhr.status);
+                closeDropdown();
+                dropdown.style.display = 'block';
+                dropdown.style.position = 'absolute';
+                dropdown.style.top = '45px';
+                dropdown.style.right = '0';
+                activeDropdown = dropdown;
             }
-        };
-        
-        xhr.onerror = function() {
-            alert('Network error');
-        };
-        
-        xhr.send(new FormData(this));
-    });
+        });
+    }
+    
+    console.log('✅ Script setup complete!');
+});
+
+// If DOM is already loaded, trigger manually
+if (document.readyState === 'loading') {
+    console.log('📖 Document still loading...');
+} else {
+    console.log('⚡ Document already loaded, firing event manually');
+    document.dispatchEvent(new Event('DOMContentLoaded'));
 }
 </script>
-   
 </body>
 </html>
