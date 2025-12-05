@@ -52,7 +52,7 @@ if (isset($_SESSION['user_id'])) {
 <div class="sidebar" id="sidebar">
     <div class="sidebar-header">
         <div class="logo">
-            <i class="fas fa-music"></i>
+            <i class="fa-solid fa-music"></i>
             <span><?php echo SITE_NAME; ?></span>
         </div>
         <button class="sidebar-close" id="sidebarClose">

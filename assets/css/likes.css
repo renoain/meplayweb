@@ -116,6 +116,7 @@
   opacity: 0;
   transition: opacity 0.2s;
   cursor: pointer;
+  border-radius: 0.5rem;
 }
 
 .song-item:hover .play-btn {
@@ -154,7 +155,7 @@
   flex-shrink: 0;
 }
 
-/* Song actions dengan dropdown yang SOLID */
+/* Song actions dengan dropdown yang SOLID - ALIGN LEFT */
 .song-actions {
   position: relative;
   flex-shrink: 0;
@@ -179,11 +180,12 @@
   color: var(--text-primary);
 }
 
-/* Dropdown menu - SOLID BACKGROUND */
+/* Dropdown menu - SOLID BACKGROUND - ALIGN LEFT */
 .dropdown-menu {
   position: absolute;
   bottom: 100%;
-  right: 0;
+  right: auto;
+  left: 0;
   background: var(--bg-primary);
   border: 1px solid var(--border-color);
   border-radius: 0.5rem;
@@ -242,7 +244,7 @@
   background-color: transparent !important;
 }
 
-/* Dropdown submenu */
+/* Dropdown submenu - ALIGN LEFT */
 .dropdown-submenu {
   position: relative;
 }
@@ -368,17 +370,14 @@
     margin: 0 0.5rem;
   }
 
+  /* Mobile: dropdown tetap align left */
   .dropdown-menu {
-    position: fixed;
-    top: 50% !important;
-    left: 50% !important;
-    transform: translate(-50%, -50%) scale(0.95) !important;
-    min-width: 280px;
-    max-width: 90vw;
-  }
-
-  .dropdown-menu.show {
-    transform: translate(-50%, -50%) scale(1) !important;
+    position: absolute;
+    bottom: 100%;
+    left: 0;
+    right: auto;
+    min-width: 250px;
+    max-width: calc(100vw - 2rem);
   }
 
   .submenu {
@@ -386,5 +385,77 @@
     transform: none;
     margin-top: 0.5rem;
     border: 1px solid var(--border-color);
+    opacity: 1;
+    visibility: visible;
+  }
+
+  .dropdown-submenu:hover .submenu {
+    transform: none;
+  }
+}
+
+@media (max-width: 480px) {
+  .dropdown-menu {
+    min-width: 200px;
+  }
+}
+
+/* assets/css/likes.css - DIPERBAIKI */
+/* Tambahkan container untuk mencegah scroll horizontal */
+.content {
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
+.header-content {
+  display: flex;
+  align-items: flex-end;
+  gap: 1.5rem;
+  max-width: 100%;
+}
+
+.header-info h1 {
+  font-size: 3rem;
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+  /* Tambahkan untuk mencegah overflow */
+  word-break: break-word;
+  overflow-wrap: break-word;
+  max-width: 100%;
+}
+
+/* Songs list container */
+.songs-list {
+  background: var(--bg-secondary);
+  border-radius: 0.75rem;
+  box-shadow: var(--shadow);
+  /* Mencegah scroll horizontal */
+  max-width: 100%;
+  overflow: hidden;
+}
+
+.song-item {
+  display: flex;
+  align-items: center;
+  padding: 1rem 1.5rem;
+  border-bottom: 1px solid var(--border-color);
+  position: relative;
+  /* Pastikan tidak ada overflow */
+  max-width: 100%;
+  overflow: hidden;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .header-content {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+    max-width: 100%;
+  }
+
+  .header-info h1 {
+    font-size: 2rem;
+    max-width: 100%;
   }
 }

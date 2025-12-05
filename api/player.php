@@ -97,7 +97,7 @@ function updatePlayCount() {
     $song_id = $_POST['song_id'] ?? null;
     $user_id = $_SESSION['user_id'] ?? null;
     }
-}
+
 
 function addRecentlyPlayed() {
     global $db;

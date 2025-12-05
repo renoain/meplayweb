@@ -51,31 +51,102 @@ function getCoverPath($cover_image, $type = 'song') {
         return $cover_image;
     }
     
-    // For song covers
-    if ($type === 'song') {
-        $path = 'uploads/covers/' . $cover_image;
-        if (file_exists($path)) {
-            return $path;
-        }
+    $path = '';
+    switch ($type) {
+        case 'song':
+        case 'album':
+            $path = 'uploads/covers/' . $cover_image;
+            break;
+        case 'artist':
+            $path = 'uploads/artists/' . $cover_image;
+            break;
+        case 'playlist':
+            $path = 'uploads/playlists/' . $cover_image;
+            break;
     }
     
-    // For album covers
-    if ($type === 'album') {
-        $path = 'uploads/covers/' . $cover_image;
-        if (file_exists($path)) {
-            return $path;
-        }
-    }
-    
-    // For artist images
-    if ($type === 'artist') {
-        $path = 'uploads/artists/' . $cover_image;
-        if (file_exists($path)) {
-            return $path;
-        }
+    if ($path && file_exists($path)) {
+        return $path;
     }
     
     return 'assets/images/covers/default-cover.png';
+}
+
+// Function khusus untuk playlist cover
+function getPlaylistCoverPath($cover_image) {
+    return getCoverPath($cover_image, 'playlist');
+}
+
+// Upload playlist cover
+function uploadPlaylistCover($file) {
+    $target_dir = dirname(__DIR__) . '/uploads/playlists/';
+    
+    // Create directory if not exists
+    if (!file_exists($target_dir)) {
+        mkdir($target_dir, 0755, true);
+    }
+    
+    // Check for upload errors
+    if ($file['error'] !== UPLOAD_ERR_OK) {
+        $error_messages = [
+            UPLOAD_ERR_INI_SIZE => 'File terlalu besar',
+            UPLOAD_ERR_FORM_SIZE => 'File terlalu besar',
+            UPLOAD_ERR_PARTIAL => 'File hanya terupload sebagian',
+            UPLOAD_ERR_NO_FILE => 'Tidak ada file yang diupload',
+            UPLOAD_ERR_NO_TMP_DIR => 'Folder temporary tidak ada',
+            UPLOAD_ERR_CANT_WRITE => 'Gagal menulis file',
+            UPLOAD_ERR_EXTENSION => 'Upload dihentikan oleh extension'
+        ];
+        return [
+            'success' => false, 
+            'message' => $error_messages[$file['error']] ?? 'Unknown upload error'
+        ];
+    }
+
+    // Check file size (max 5MB)
+    if ($file['size'] > 5 * 1024 * 1024) {
+        return ['success' => false, 'message' => 'File too large. Maximum size is 5MB.'];
+    }
+
+    // Get file extension
+    $file_extension = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
+    
+    // Validate file type
+    $allowed_types = ['jpg', 'jpeg', 'png', 'webp', 'gif'];
+    if (!in_array($file_extension, $allowed_types)) {
+        return [
+            'success' => false, 
+            'message' => 'File type not allowed. Only JPG, PNG, WebP, GIF are allowed.'
+        ];
+    }
+    
+    // Generate unique filename
+    $new_filename = 'playlist_' . uniqid() . '_' . time() . '.' . $file_extension;
+    $target_file = $target_dir . $new_filename;
+
+    // Move uploaded file
+    if (move_uploaded_file($file['tmp_name'], $target_file)) {
+        return [
+            'success' => true, 
+            'file_name' => $new_filename,
+            'file_path' => $target_file
+        ];
+    } else {
+        return ['success' => false, 'message' => 'Failed to upload image.'];
+    }
+}
+
+// Delete playlist cover
+function deletePlaylistCover($cover_image) {
+    if ($cover_image && $cover_image !== 'default-cover.png') {
+        $target_dir = dirname(__DIR__) . '/uploads/playlists/';
+        $file_path = $target_dir . $cover_image;
+        
+        if (file_exists($file_path)) {
+            return unlink($file_path);
+        }
+    }
+    return true;
 }
 
 function uploadFile($file, $target_dir, $allowed_types = []) {
@@ -157,5 +228,14 @@ function logActivity($message, $user_id = null) {
 
 function getCurrentTheme() {
     return isset($_COOKIE['theme']) ? $_COOKIE['theme'] : 'light';
+}
+
+// Create playlist directory
+function createPlaylistDirectory() {
+    $playlist_dir = UPLOAD_PATH . 'playlists/';
+    if (!file_exists($playlist_dir)) {
+        mkdir($playlist_dir, 0755, true);
+    }
+    return $playlist_dir;
 }
 ?>
