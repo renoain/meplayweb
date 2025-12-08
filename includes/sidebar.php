@@ -74,12 +74,6 @@ if (isset($_SESSION['user_id'])) {
                     <span>Cari</span>
                 </a>
             </li>
-            <li class="nav-item <?php echo $current_page == 'library.php' ? 'active' : ''; ?>">
-                <a href="library.php" class="nav-link">
-                    <i class="fas fa-book"></i>
-                    <span>Library</span>
-                </a>
-            </li>
         </ul>
 
         <div class="sidebar-section">

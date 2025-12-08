@@ -1,4 +1,19 @@
-/* assets/css/likes.css */
+/* ====== LIKES PAGE STYLES ====== */
+
+/* ====== RESET & BASE ====== */
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body,
+html {
+  overflow-x: hidden;
+}
+
+/* ====== PAGE HEADER ====== */
 .page-header {
   display: flex;
   justify-content: space-between;
@@ -23,6 +38,7 @@
   align-items: center;
   justify-content: center;
   box-shadow: var(--shadow-lg);
+  flex-shrink: 0;
 }
 
 .header-icon i {
@@ -34,6 +50,9 @@
   font-size: 3rem;
   font-weight: 700;
   margin-bottom: 0.5rem;
+  color: var(--text-primary);
+  line-height: 1.2;
+  word-break: break-word;
 }
 
 .header-info p {
@@ -41,6 +60,7 @@
   font-size: 1rem;
 }
 
+/* ====== HEADER ACTIONS ====== */
 .header-actions {
   margin-bottom: 1rem;
 }
@@ -56,6 +76,8 @@
   display: flex;
   align-items: center;
   gap: 0.5rem;
+  font-size: 0.875rem;
+  transition: all 0.2s;
 }
 
 .play-all-btn:hover {
@@ -63,19 +85,27 @@
   transform: scale(1.05);
 }
 
-/* Songs list */
+/* ====== SONGS LIST ====== */
 .songs-list {
   background: var(--bg-secondary);
   border-radius: 0.75rem;
   box-shadow: var(--shadow);
+  overflow: hidden;
+  width: 100%;
+  position: relative;
 }
 
 .song-item {
-  display: flex;
+  display: grid;
+  grid-template-columns: auto 1fr auto auto;
   align-items: center;
   padding: 1rem 1.5rem;
   border-bottom: 1px solid var(--border-color);
   position: relative;
+  transition: background-color 0.2s;
+  gap: 1rem;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .song-item:hover {
@@ -86,13 +116,15 @@
   border-bottom: none;
 }
 
+/* ====== SONG COVER ====== */
 .song-cover {
   width: 3rem;
   height: 3rem;
   border-radius: 0.5rem;
-  margin-right: 1rem;
   position: relative;
   flex-shrink: 0;
+  overflow: hidden;
+  grid-column: 1;
 }
 
 .song-cover img {
@@ -123,130 +155,149 @@
   opacity: 1;
 }
 
+/* ====== SONG INFO ====== */
 .song-info {
-  flex: 1;
   min-width: 0;
-  margin-right: 1rem;
+  overflow: hidden;
+  grid-column: 2;
 }
 
 .song-info h4 {
   font-size: 1rem;
   font-weight: 600;
   margin-bottom: 0.25rem;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .song-info p {
   font-size: 0.875rem;
   color: var(--text-secondary);
-  margin-bottom: 0.25rem;
+  margin-bottom: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-.song-meta {
-  display: flex;
-  gap: 1rem;
-  font-size: 0.75rem;
-  color: var(--text-muted);
-}
-
+/* ====== SONG DURATION ====== */
 .song-duration {
   color: var(--text-secondary);
   font-size: 0.875rem;
-  margin: 0 1.5rem;
   flex-shrink: 0;
+  grid-column: 3;
 }
 
-/* Song actions dengan dropdown yang SOLID - ALIGN LEFT */
+/* ====== SONG ACTIONS ====== */
 .song-actions {
   position: relative;
   flex-shrink: 0;
+  grid-column: 4;
+  display: flex;
+  justify-content: flex-end;
 }
 
-.more-btn {
-  background: none;
-  border: none;
-  color: var(--text-secondary);
-  cursor: pointer;
-  padding: 0.5rem;
-  border-radius: 0.375rem;
+.song-actions .more-btn {
   width: 32px;
   height: 32px;
+  border-radius: 50%;
+  background: transparent;
+  border: none;
+  color: var(--text-secondary);
   display: flex;
   align-items: center;
   justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s;
+  position: relative;
+  z-index: 10;
 }
 
-.more-btn:hover {
+.song-actions .more-btn:hover {
   background-color: var(--bg-tertiary);
   color: var(--text-primary);
 }
 
-/* Dropdown menu - SOLID BACKGROUND - ALIGN LEFT */
-.dropdown-menu {
-  position: absolute;
-  bottom: 100%;
-  right: auto;
-  left: 0;
-  background: var(--bg-primary);
+/* ====== SONG DROPDOWN ====== */
+.song-dropdown {
+  position: fixed;
+  background-color: var(--bg-primary);
   border: 1px solid var(--border-color);
   border-radius: 0.5rem;
-  padding: 0.5rem;
+  box-shadow: var(--shadow-lg);
   min-width: 220px;
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+  padding: 0.5rem 0;
   z-index: 1000;
-  margin-bottom: 5px;
-
-  /* Solid background - tidak transparan */
-  backdrop-filter: none;
-  -webkit-backdrop-filter: none;
-
-  /* Sembunyikan dulu */
-  opacity: 0;
-  visibility: hidden;
-  transform: translateY(10px);
-  transition: all 0.2s ease;
+  display: none;
 }
 
-/* Tampilkan dropdown */
-.dropdown-menu.show {
-  opacity: 1;
-  visibility: visible;
-  transform: translateY(0);
+.song-dropdown.show {
+  display: block;
 }
 
-.dropdown-item {
+.song-dropdown .dropdown-item {
   display: flex;
   align-items: center;
   gap: 0.75rem;
-  width: 100%;
   padding: 0.75rem 1rem;
   background: none;
   border: none;
-  color: var(--text-primary);
+  width: 100%;
   text-align: left;
-  cursor: pointer;
-  border-radius: 0.25rem;
+  color: var(--text-primary);
   font-size: 0.875rem;
+  cursor: pointer;
   transition: background-color 0.2s;
 }
 
-/* Solid background pada hover */
-.dropdown-item:hover {
-  background-color: var(--bg-secondary) !important;
+.song-dropdown .dropdown-item:hover {
+  background-color: var(--bg-secondary);
 }
 
-.dropdown-item.disabled {
-  color: var(--text-muted);
-  cursor: not-allowed;
-  opacity: 0.6;
+/* ====== LIKE BUTTON STYLES - WARNA MERAH ====== */
+.song-dropdown .dropdown-item.like-song.liked {
+  color: var(--danger-color) !important;
 }
 
-.dropdown-item.disabled:hover {
-  background-color: transparent !important;
+.song-dropdown .dropdown-item.like-song.liked i {
+  color: var(--danger-color) !important;
 }
 
-/* Dropdown submenu - ALIGN LEFT */
+.song-dropdown .dropdown-item.like-song.liked:hover {
+  background-color: rgba(239, 68, 68, 0.1) !important;
+}
+
+.song-dropdown .dropdown-item.text-danger {
+  color: var(--danger-color);
+}
+
+.song-dropdown .dropdown-item.text-danger:hover {
+  background-color: rgba(239, 68, 68, 0.1);
+}
+
+/* ====== DROPDOWN SUBMENU ====== */
 .dropdown-submenu {
   position: relative;
+}
+
+.dropdown-submenu .submenu {
+  position: absolute;
+  top: 0;
+  left: 100%;
+  background-color: var(--bg-primary);
+  border: 1px solid var(--border-color);
+  border-radius: 0.375rem;
+  box-shadow: var(--shadow-lg);
+  min-width: 200px;
+  padding: 0.5rem 0;
+  display: none;
+  z-index: 1001;
+  margin-left: 2px;
+}
+
+.dropdown-submenu:hover .submenu {
+  display: block;
 }
 
 .dropdown-submenu > .dropdown-item {
@@ -255,45 +306,17 @@
   align-items: center;
 }
 
-.submenu {
-  position: absolute;
-  left: 100%;
-  top: -0.5rem;
-  background: var(--bg-primary);
-  border: 1px solid var(--border-color);
-  border-radius: 0.5rem;
-  padding: 0.5rem;
-  min-width: 200px;
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
-  opacity: 0;
-  visibility: hidden;
-  transform: translateX(-10px);
-  transition: all 0.2s ease;
-  z-index: 1001;
-}
-
-.dropdown-submenu:hover .submenu {
-  opacity: 1;
-  visibility: visible;
-  transform: translateX(0);
-}
-
-/* Like button states */
-.like-song.liked {
-  color: var(--danger-color);
-}
-
-.like-song.liked i {
-  color: var(--danger-color);
-}
-
+/* ====== NO SONGS STATE ====== */
 .no-songs {
   display: flex;
   align-items: center;
   justify-content: center;
-  min-height: 400px;
+  min-height: 300px;
   text-align: center;
-  padding: 2rem;
+  background-color: var(--bg-secondary);
+  border-radius: 0.75rem;
+  margin-top: 2rem;
+  padding: 3rem 2rem;
 }
 
 .no-songs-content {
@@ -316,7 +339,210 @@
   margin-bottom: 2rem;
 }
 
-/* Responsive */
+/* ====== MODAL STYLES ====== */
+.modal {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  z-index: 10000;
+  align-items: center;
+  justify-content: center;
+}
+
+.modal.show {
+  display: flex;
+}
+
+.modal-content {
+  background-color: var(--bg-primary);
+  border-radius: 0.75rem;
+  width: 90%;
+  max-width: 500px;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: var(--shadow-lg);
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.5rem;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.modal-header h3 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.close-modal {
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  color: var(--text-secondary);
+  cursor: pointer;
+  padding: 0.25rem;
+  border-radius: 0.375rem;
+  transition: all 0.2s;
+  line-height: 1;
+}
+
+.close-modal:hover {
+  color: var(--text-primary);
+  background-color: var(--bg-tertiary);
+}
+
+.modal-body {
+  padding: 1.5rem;
+}
+
+/* ====== FORM STYLES ====== */
+.form-group {
+  margin-bottom: 1.5rem;
+}
+
+.form-group label {
+  display: block;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--text-primary);
+  margin-bottom: 0.5rem;
+}
+
+.form-group input[type="text"],
+.form-group textarea {
+  width: 100%;
+  padding: 0.75rem;
+  background-color: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 0.5rem;
+  color: var(--text-primary);
+  font-size: 0.875rem;
+  transition: all 0.2s;
+}
+
+.form-group input[type="text"]:focus,
+.form-group textarea:focus {
+  outline: none;
+  border-color: var(--accent-color);
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.form-group textarea {
+  min-height: 100px;
+  resize: vertical;
+  font-family: inherit;
+}
+
+/* ====== BUTTON STYLES ====== */
+.btn-primary,
+.btn-secondary {
+  padding: 0.75rem 1.5rem;
+  border-radius: 0.5rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  border: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  text-decoration: none;
+}
+
+.btn-primary {
+  background-color: var(--accent-color);
+  color: white;
+}
+
+.btn-primary:hover {
+  background-color: var(--accent-hover);
+}
+
+.btn-secondary {
+  background-color: var(--bg-secondary);
+  color: var(--text-primary);
+  border: 1px solid var(--border-color);
+}
+
+.btn-secondary:hover {
+  background-color: var(--bg-tertiary);
+}
+
+/* ====== FORM ACTIONS ====== */
+.form-actions {
+  display: flex;
+  gap: 1rem;
+  justify-content: flex-end;
+  margin-top: 2rem;
+}
+
+/* ====== NOTIFICATION STYLES ====== */
+.notification {
+  position: relative;
+  padding: 0.75rem 1rem;
+  border-radius: 0.5rem;
+  margin-bottom: 1rem;
+  display: none;
+  animation: slideIn 0.3s ease-out;
+}
+
+.notification.show {
+  display: block;
+}
+
+.notification-success {
+  background-color: rgba(34, 197, 94, 0.1);
+  border: 1px solid rgba(34, 197, 94, 0.2);
+  color: #16a34a;
+}
+
+.notification-error {
+  background-color: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.2);
+  color: #dc2626;
+}
+
+.notification-content {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.notification-content i {
+  font-size: 1.25rem;
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ====== RESPONSIVE STYLES ====== */
+@media (max-width: 1024px) {
+  .header-info h1 {
+    font-size: 2.5rem;
+  }
+
+  .song-item {
+    padding: 0.875rem 1.25rem;
+    gap: 0.75rem;
+  }
+}
+
 @media (max-width: 768px) {
   .page-header {
     flex-direction: column;
@@ -331,20 +557,26 @@
   }
 
   .header-icon {
-    width: 100px;
-    height: 100px;
-  }
-
-  .header-icon i {
-    font-size: 2.5rem;
+    width: 200px;
+    height: 200px;
+    margin: 0 auto;
   }
 
   .header-info h1 {
     font-size: 2rem;
+    text-align: center;
+    width: 100%;
+  }
+
+  .header-info p {
+    text-align: center;
+    width: 100%;
   }
 
   .header-actions {
-    align-self: stretch;
+    width: 100%;
+    display: flex;
+    justify-content: center;
   }
 
   .play-all-btn {
@@ -354,108 +586,81 @@
 
   .song-item {
     padding: 0.75rem 1rem;
+    gap: 0.5rem;
   }
 
   .song-cover {
     width: 2.5rem;
     height: 2.5rem;
-    margin-right: 0.75rem;
   }
 
-  .song-info {
-    margin-right: 0.5rem;
+  /* Mobile dropdown styles */
+  .song-dropdown {
+    position: fixed !important;
+    bottom: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    top: auto !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    border-radius: 1rem 1rem 0 0 !important;
+    transform: none !important;
+    animation: slideUp 0.3s ease-out;
   }
 
-  .song-duration {
-    margin: 0 0.5rem;
-  }
-
-  /* Mobile: dropdown tetap align left */
-  .dropdown-menu {
-    position: absolute;
-    bottom: 100%;
-    left: 0;
-    right: auto;
-    min-width: 250px;
-    max-width: calc(100vw - 2rem);
-  }
-
-  .submenu {
-    position: static;
-    transform: none;
-    margin-top: 0.5rem;
-    border: 1px solid var(--border-color);
-    opacity: 1;
-    visibility: visible;
-  }
-
-  .dropdown-submenu:hover .submenu {
-    transform: none;
+  @keyframes slideUp {
+    from {
+      transform: translateY(100%);
+    }
+    to {
+      transform: translateY(0);
+    }
   }
 }
 
 @media (max-width: 480px) {
-  .dropdown-menu {
-    min-width: 200px;
-  }
-}
-
-/* assets/css/likes.css - DIPERBAIKI */
-/* Tambahkan container untuk mencegah scroll horizontal */
-.content {
-  max-width: 100%;
-  overflow-x: hidden;
-}
-
-.header-content {
-  display: flex;
-  align-items: flex-end;
-  gap: 1.5rem;
-  max-width: 100%;
-}
-
-.header-info h1 {
-  font-size: 3rem;
-  font-weight: 700;
-  margin-bottom: 0.5rem;
-  /* Tambahkan untuk mencegah overflow */
-  word-break: break-word;
-  overflow-wrap: break-word;
-  max-width: 100%;
-}
-
-/* Songs list container */
-.songs-list {
-  background: var(--bg-secondary);
-  border-radius: 0.75rem;
-  box-shadow: var(--shadow);
-  /* Mencegah scroll horizontal */
-  max-width: 100%;
-  overflow: hidden;
-}
-
-.song-item {
-  display: flex;
-  align-items: center;
-  padding: 1rem 1.5rem;
-  border-bottom: 1px solid var(--border-color);
-  position: relative;
-  /* Pastikan tidak ada overflow */
-  max-width: 100%;
-  overflow: hidden;
-}
-
-/* Responsive */
-@media (max-width: 768px) {
-  .header-content {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 1rem;
-    max-width: 100%;
+  .header-icon {
+    width: 150px;
+    height: 150px;
   }
 
   .header-info h1 {
-    font-size: 2rem;
-    max-width: 100%;
+    font-size: 1.5rem;
+  }
+
+  .song-item {
+    grid-template-columns: auto 1fr auto;
+    grid-template-rows: auto auto;
+  }
+
+  .song-cover {
+    width: 2rem;
+    height: 2rem;
+    grid-row: span 2;
+  }
+
+  .song-info {
+    grid-column: 2;
+    grid-row: 1;
+  }
+
+  .song-duration {
+    grid-column: 2;
+    grid-row: 2;
+    text-align: left;
+    font-size: 0.75rem;
+  }
+
+  .song-actions {
+    grid-column: 3;
+    grid-row: span 2;
+  }
+
+  .song-dropdown {
+    min-width: 180px;
+  }
+
+  .dropdown-submenu .submenu {
+    display: none !important;
   }
 }
