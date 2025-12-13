@@ -1,75 +1,189 @@
-// Songs specific JavaScript
 document.addEventListener("DOMContentLoaded", function () {
+  console.log("Admin Songs JS Loaded");
+
+  // FIX ALIGNMENT ON LOAD
+  fixAllInputAlignment();
+
+  // Initialize searchable selects
+  initializeSearchableSelects();
+
+  // Initialize other components
   initializeSongsForm();
   initializeSongsUpload();
-  initializeSearchableSelects();
   initializeDurationInputs();
 });
 
-function initializeSongsForm() {
-  const songForm = document.getElementById("songForm");
+// FIX ALIGNMENT FUNCTIONS
 
-  if (songForm) {
-    songForm.addEventListener("submit", function (e) {
-      const title = document.getElementById("title").value.trim();
-      const artistSelect = document.getElementById("artist_id");
-      const artistSearch = document.getElementById("artistSearch");
-      const durationMinutes = document.getElementById("duration_minutes");
-      const durationSeconds = document.getElementById("duration_seconds");
-      const audioFile = document.getElementById("audio_file");
+function fixAllInputAlignment() {
+  console.log("Fixing input alignment...");
 
-      // Validate title
-      if (!title) {
-        e.preventDefault();
-        showAlert("Judul lagu wajib diisi!", "error");
-        document.getElementById("title").focus();
-        return false;
+  // List semua input yang perlu di-fix
+  const inputsToFix = [
+    "title",
+    "artistSearch",
+    "albumSearch",
+    "genreSearch",
+    "duration_minutes",
+    "duration_seconds",
+  ];
+
+  inputsToFix.forEach((id) => {
+    const input = document.getElementById(id);
+    if (input) {
+      // Force left alignment untuk semua kecuali duration
+      if (id.includes("duration")) {
+        // Durasi tetap center untuk angka
+        input.style.textAlign = "center";
+      } else {
+        // Semua lainnya left
+        input.style.textAlign = "left";
+        input.style.paddingLeft = "15px";
       }
 
-      // Validate artist - REQUIRED
-      if (!artistSelect.value) {
-        e.preventDefault();
-        showAlert("Artis wajib dipilih!", "error");
-        artistSearch.focus();
-        return false;
-      }
+      // Force width 100%
+      input.style.width = "100%";
+      input.style.boxSizing = "border-box";
 
-      // Validate duration
-      const minutes = parseInt(durationMinutes.value) || 0;
-      const seconds = parseInt(durationSeconds.value) || 0;
+      console.log(`Fixed alignment for: ${id}`);
+    }
+  });
 
-      if (minutes < 0 || seconds < 0 || seconds > 59) {
-        e.preventDefault();
-        showAlert(
-          "Format durasi tidak valid! Detik harus antara 0-59.",
-          "error"
-        );
-        durationSeconds.focus();
-        return false;
-      }
-
-      const totalDuration = minutes * 60 + seconds;
-      if (totalDuration <= 0) {
-        e.preventDefault();
-        showAlert("Durasi lagu harus lebih dari 0 detik!", "error");
-        durationMinutes.focus();
-        return false;
-      }
-
-      // Validate audio file for new songs
-      if (!window.songEditMode && (!audioFile || !audioFile.files.length)) {
-        e.preventDefault();
-        showAlert("File audio wajib diupload!", "error");
-        return false;
-      }
-
-      return true;
-    });
-  }
-
-  // Set edit mode flag
-  window.songEditMode = !!document.querySelector('input[name="edit_song"]');
+  // Special force untuk search inputs
+  forceSearchInputsAlignment();
 }
+
+function forceSearchInputsAlignment() {
+  // Force dengan selector yang lebih kuat
+  const style = document.createElement("style");
+  style.textContent = `
+    #artistSearch, 
+    #albumSearch, 
+    #genreSearch {
+      text-align: left !important;
+      padding-left: 15px !important;
+    }
+    
+    .searchable-select input[type="text"] {
+      text-align: left !important;
+      padding-left: 15px !important;
+    }
+  `;
+  document.head.appendChild(style);
+}
+
+// SEARCHABLE SELECT FUNCTIONS
+
+function initializeSearchableSelects() {
+  // Initialize each searchable select
+  setupSearchableSelect("artistSearch", "artist_id");
+  setupSearchableSelect("albumSearch", "album_id");
+  setupSearchableSelect("genreSearch", "genre_id");
+}
+
+function setupSearchableSelect(searchInputId, selectId) {
+  const searchInput = document.getElementById(searchInputId);
+  const select = document.getElementById(selectId);
+
+  if (!searchInput || !select) return;
+
+  // Ensure alignment
+  searchInput.style.textAlign = "left";
+  searchInput.style.paddingLeft = "15px";
+
+  // Show dropdown on focus
+  searchInput.addEventListener("focus", function () {
+    select.style.display = "block";
+    select.style.width = this.offsetWidth + "px";
+  });
+
+  // Hide dropdown on blur
+  searchInput.addEventListener("blur", function () {
+    setTimeout(() => {
+      select.style.display = "none";
+    }, 200);
+  });
+
+  // Filter options on input
+  searchInput.addEventListener("input", function () {
+    const searchTerm = this.value.toLowerCase();
+    const options = select.options;
+
+    for (let i = 0; i < options.length; i++) {
+      const option = options[i];
+      const text = option.text.toLowerCase();
+
+      if (text.includes(searchTerm) || option.value === "") {
+        option.style.display = "";
+      } else {
+        option.style.display = "none";
+      }
+    }
+  });
+
+  // Update search input when option is selected
+  select.addEventListener("change", function () {
+    const selectedOption = this.options[this.selectedIndex];
+    if (selectedOption && selectedOption.value) {
+      searchInput.value = selectedOption.text;
+    }
+  });
+
+  // Allow clicking on options
+  select.addEventListener("mousedown", function (e) {
+    if (e.target.tagName === "OPTION") {
+      this.value = e.target.value;
+      this.dispatchEvent(new Event("change"));
+    }
+  });
+}
+
+// FORM VALIDATION
+
+function initializeSongsForm() {
+  const form = document.getElementById("songForm");
+  if (!form) return;
+
+  form.addEventListener("submit", function (e) {
+    // Basic validation
+    const title = document.getElementById("title").value.trim();
+    const artistId = document.getElementById("artist_id").value;
+    const durationMinutes = document.getElementById("duration_minutes").value;
+    const durationSeconds = document.getElementById("duration_seconds").value;
+
+    if (!title) {
+      e.preventDefault();
+      showAlert("Judul lagu wajib diisi", "error");
+      return false;
+    }
+
+    if (!artistId) {
+      e.preventDefault();
+      showAlert("Artis wajib dipilih", "error");
+      return false;
+    }
+
+    // Validate duration
+    const minutes = parseInt(durationMinutes) || 0;
+    const seconds = parseInt(durationSeconds) || 0;
+
+    if (minutes < 0 || seconds < 0 || seconds > 59) {
+      e.preventDefault();
+      showAlert("Format durasi tidak valid. Detik harus antara 0-59", "error");
+      return false;
+    }
+
+    if (minutes === 0 && seconds === 0) {
+      e.preventDefault();
+      showAlert("Durasi lagu harus lebih dari 0 detik", "error");
+      return false;
+    }
+
+    return true;
+  });
+}
+
+// FILE UPLOAD WITH AUTO DURATION
 
 function initializeSongsUpload() {
   initializeAudioUpload();
@@ -81,38 +195,31 @@ function initializeAudioUpload() {
   const audioFile = document.getElementById("audio_file");
   const audioInfo = document.querySelector(".audio-file-info");
 
-  if (!audioUpload || !audioFile || !audioInfo) return;
+  if (!audioUpload || !audioFile || !audioInfo) {
+    console.warn("Audio upload elements not found");
+    return;
+  }
 
-  // Prevent multiple event listeners
-  audioUpload.removeEventListener("click", handleAudioUploadClick);
-  audioUpload.removeEventListener("dragover", handleAudioDragOver);
-  audioUpload.removeEventListener("dragleave", handleAudioDragLeave);
-  audioUpload.removeEventListener("drop", handleAudioDrop);
-  audioFile.removeEventListener("change", handleAudioFileChange);
+  console.log("Initializing audio upload with auto-duration...");
 
-  // Add event listeners
-  audioUpload.addEventListener("click", handleAudioUploadClick);
-  audioUpload.addEventListener("dragover", handleAudioDragOver);
-  audioUpload.addEventListener("dragleave", handleAudioDragLeave);
-  audioUpload.addEventListener("drop", handleAudioDrop);
-  audioFile.addEventListener("change", handleAudioFileChange);
-
-  function handleAudioUploadClick(e) {
-    if (e.target !== audioFile && !e.target.closest('input[type="file"]')) {
+  // Handle click on upload area
+  audioUpload.addEventListener("click", function (e) {
+    if (e.target !== audioFile) {
       audioFile.click();
     }
-  }
+  });
 
-  function handleAudioDragOver(e) {
+  // Handle drag and drop
+  audioUpload.addEventListener("dragover", function (e) {
     e.preventDefault();
     audioUpload.classList.add("dragover");
-  }
+  });
 
-  function handleAudioDragLeave() {
+  audioUpload.addEventListener("dragleave", function () {
     audioUpload.classList.remove("dragover");
-  }
+  });
 
-  function handleAudioDrop(e) {
+  audioUpload.addEventListener("drop", function (e) {
     e.preventDefault();
     audioUpload.classList.remove("dragover");
 
@@ -121,33 +228,35 @@ function initializeAudioUpload() {
 
       if (!isValidAudioFile(file.name)) {
         showAlert(
-          "Format file audio tidak didukung! Gunakan MP3, WAV, atau OGG.",
+          "Format file audio tidak didukung. Gunakan MP3, WAV, OGG, atau M4A",
           "error"
         );
         return;
       }
 
       if (file.size > 20 * 1024 * 1024) {
-        showAlert("Ukuran file audio terlalu besar! Maksimal 20MB.", "error");
+        showAlert("Ukuran file audio terlalu besar. Maksimal 20MB", "error");
         return;
       }
 
+      // Create a new DataTransfer object and add the file
       const dataTransfer = new DataTransfer();
       dataTransfer.items.add(file);
       audioFile.files = dataTransfer.files;
 
       updateAudioInfo();
-      loadAudioPreview(file);
+      extractAndSetAudioDuration(file);
     }
-  }
+  });
 
-  function handleAudioFileChange() {
+  // Handle file selection
+  audioFile.addEventListener("change", function () {
     if (audioFile.files.length > 0) {
       const file = audioFile.files[0];
 
       if (!isValidAudioFile(file.name)) {
         showAlert(
-          "Format file audio tidak didukung! Gunakan MP3, WAV, atau OGG.",
+          "Format file audio tidak didukung. Gunakan MP3, WAV, OGG, atau M4A",
           "error"
         );
         audioFile.value = "";
@@ -156,18 +265,18 @@ function initializeAudioUpload() {
       }
 
       if (file.size > 20 * 1024 * 1024) {
-        showAlert("Ukuran file audio terlalu besar! Maksimal 20MB.", "error");
+        showAlert("Ukuran file audio terlalu besar. Maksimal 20MB", "error");
         audioFile.value = "";
         updateAudioInfo();
         return;
       }
 
       updateAudioInfo();
-      loadAudioPreview(file);
+      extractAndSetAudioDuration(file);
     } else {
       updateAudioInfo();
     }
-  }
+  });
 
   function updateAudioInfo() {
     if (audioFile.files.length > 0) {
@@ -175,13 +284,13 @@ function initializeAudioUpload() {
       const fileSize = (file.size / 1024 / 1024).toFixed(2);
 
       audioInfo.innerHTML = `
-                <div class="audio-details">
-                    <strong>${file.name}</strong>
-                    <div class="audio-meta">
-                        <span>${fileSize} MB</span>
-                    </div>
-                </div>
-            `;
+        <div class="audio-details">
+          <strong>${file.name}</strong>
+          <div class="audio-meta">
+            <span>${fileSize} MB</span>
+          </div>
+        </div>
+      `;
       audioInfo.style.color = "var(--success)";
     } else {
       audioInfo.innerHTML = "Belum ada file yang dipilih";
@@ -195,59 +304,104 @@ function initializeAudioUpload() {
     }
   }
 
-  function loadAudioPreview(file) {
-    const audioURL = URL.createObjectURL(file);
+  function extractAndSetAudioDuration(file) {
+    console.log("Extracting duration from audio file...");
 
+    const audioURL = URL.createObjectURL(file);
+    const audio = new Audio();
+
+    // Show loading message
+    const audioMeta = audioInfo.querySelector(".audio-meta");
+    if (audioMeta) {
+      audioMeta.innerHTML += `<span>•</span><span>Mengekstrak durasi...</span>`;
+    }
+
+    audio.src = audioURL;
+
+    audio.addEventListener("loadedmetadata", function () {
+      const duration = audio.duration; // in seconds
+      console.log("Audio duration:", duration, "seconds");
+
+      // Format duration for display
+      const formattedDuration = formatTime(duration);
+
+      // Update duration in info
+      if (audioMeta) {
+        audioMeta.innerHTML = `<span>${(file.size / 1024 / 1024).toFixed(
+          2
+        )} MB</span><span>•</span><span>${formattedDuration}</span>`;
+      }
+
+      // Auto-fill duration inputs
+      const minutes = Math.floor(duration / 60);
+      const seconds = Math.floor(duration % 60);
+
+      document.getElementById("duration_minutes").value = minutes;
+      document.getElementById("duration_seconds").value = seconds;
+
+      console.log(`Auto-filled duration: ${minutes}m ${seconds}s`);
+
+      // Create audio preview
+      createAudioPreview(audioURL, file, formattedDuration);
+
+      // Clean up URL object
+      setTimeout(() => URL.revokeObjectURL(audioURL), 1000);
+    });
+
+    audio.addEventListener("error", function (e) {
+      console.error("Error loading audio:", e);
+      showAlert(
+        "Gagal mengekstrak durasi dari file audio. Mohon isi durasi secara manual.",
+        "error"
+      );
+
+      if (audioMeta) {
+        audioMeta.innerHTML = `<span>${(file.size / 1024 / 1024).toFixed(
+          2
+        )} MB</span>`;
+      }
+    });
+
+    // Set timeout in case metadata never loads
+    setTimeout(() => {
+      if (!audio.duration || audio.duration === Infinity) {
+        console.warn("Audio metadata not loaded within timeout");
+        showAlert(
+          "Tidak dapat membaca durasi audio. Mohon isi durasi secara manual.",
+          "warning"
+        );
+      }
+    }, 5000);
+  }
+
+  function createAudioPreview(audioURL, file, duration) {
     // Remove existing preview
     const existingPreview = document.querySelector(".audio-preview");
     if (existingPreview) {
       existingPreview.remove();
     }
 
-    // Create audio element to get duration
-    const audio = new Audio();
-    audio.src = audioURL;
+    // Create preview player
+    const preview = document.createElement("div");
+    preview.className = "audio-preview";
+    preview.innerHTML = `
+      <div style="margin: 15px 0 8px 0; font-weight: 600; color: var(--dark);">
+        Preview Audio:
+      </div>
+      <audio controls style="width: 100%; max-width: 400px; margin: 10px 0;">
+        <source src="${audioURL}" type="${file.type}">
+        Browser Anda tidak mendukung pemutar audio.
+      </audio>
+      <div style="font-size: 0.8rem; color: var(--gray); margin-top: 5px;">
+        Durasi: ${duration}
+      </div>
+    `;
 
-    audio.addEventListener("loadedmetadata", function () {
-      const duration = formatTime(audio.duration);
-
-      // Update duration in info
-      const audioMeta = audioInfo.querySelector(".audio-meta");
-      if (audioMeta) {
-        audioMeta.innerHTML += `<span>•</span><span>${duration}</span>`;
-      }
-
-      // Auto-fill duration inputs
-      const minutes = Math.floor(audio.duration / 60);
-      const seconds = Math.floor(audio.duration % 60);
-
-      document.getElementById("duration_minutes").value = minutes;
-      document.getElementById("duration_seconds").value = seconds;
-
-      // Create preview player
-      const preview = document.createElement("div");
-      preview.className = "audio-preview";
-      preview.innerHTML = `
-                <div style="margin: 15px 0 8px 0; font-weight: 600; color: var(--dark);">Preview Audio:</div>
-                <audio controls style="width: 100%; max-width: 400px; margin: 10px 0;">
-                    <source src="${audioURL}" type="${file.type}">
-                    Browser Anda tidak mendukung pemutar audio.
-                </audio>
-                <div style="font-size: 0.8rem; color: var(--gray); margin-top: 5px;">
-                    Durasi: ${duration}
-                </div>
-            `;
-
-      audioUpload.parentNode.insertBefore(preview, audioUpload.nextSibling);
-    });
-
-    audio.addEventListener("error", function () {
-      showAlert("Gagal memuat preview audio.", "error");
-    });
+    audioUpload.parentNode.insertBefore(preview, audioUpload.nextSibling);
   }
 
   function isValidAudioFile(filename) {
-    const allowedExtensions = ["mp3", "wav", "ogg", "m4a"];
+    const allowedExtensions = ["mp3", "wav", "ogg", "m4a", "flac", "aac"];
     const extension = filename.toLowerCase().split(".").pop();
     return allowedExtensions.includes(extension);
   }
@@ -260,38 +414,31 @@ function initializeCoverUpload() {
     ? coverImageUpload.querySelector(".file-info")
     : null;
 
-  if (!coverImageUpload || !fileInput || !fileInfo) return;
+  if (!coverImageUpload || !fileInput || !fileInfo) {
+    console.warn("Cover upload elements not found");
+    return;
+  }
 
-  // Prevent multiple event listeners
-  coverImageUpload.removeEventListener("click", handleUploadClick);
-  coverImageUpload.removeEventListener("dragover", handleDragOver);
-  coverImageUpload.removeEventListener("dragleave", handleDragLeave);
-  coverImageUpload.removeEventListener("drop", handleDrop);
-  fileInput.removeEventListener("change", handleFileChange);
+  console.log("Initializing cover upload...");
 
-  // Add event listeners
-  coverImageUpload.addEventListener("click", handleUploadClick);
-  coverImageUpload.addEventListener("dragover", handleDragOver);
-  coverImageUpload.addEventListener("dragleave", handleDragLeave);
-  coverImageUpload.addEventListener("drop", handleDrop);
-  fileInput.addEventListener("change", handleFileChange);
-
-  function handleUploadClick(e) {
-    if (e.target !== fileInput && !e.target.closest('input[type="file"]')) {
+  // Handle click on upload area
+  coverImageUpload.addEventListener("click", function (e) {
+    if (e.target !== fileInput) {
       fileInput.click();
     }
-  }
+  });
 
-  function handleDragOver(e) {
+  // Handle drag and drop
+  coverImageUpload.addEventListener("dragover", function (e) {
     e.preventDefault();
     coverImageUpload.classList.add("dragover");
-  }
+  });
 
-  function handleDragLeave() {
+  coverImageUpload.addEventListener("dragleave", function () {
     coverImageUpload.classList.remove("dragover");
-  }
+  });
 
-  function handleDrop(e) {
+  coverImageUpload.addEventListener("drop", function (e) {
     e.preventDefault();
     coverImageUpload.classList.remove("dragover");
 
@@ -300,17 +447,18 @@ function initializeCoverUpload() {
 
       if (!isValidImageFile(file.name)) {
         showAlert(
-          "Format file tidak didukung! Gunakan JPG, PNG, atau WEBP.",
+          "Format file tidak didukung. Gunakan JPG, PNG, atau WEBP",
           "error"
         );
         return;
       }
 
       if (file.size > 5 * 1024 * 1024) {
-        showAlert("Ukuran file terlalu besar! Maksimal 5MB.", "error");
+        showAlert("Ukuran file terlalu besar. Maksimal 5MB", "error");
         return;
       }
 
+      // Create a new DataTransfer object and add the file
       const dataTransfer = new DataTransfer();
       dataTransfer.items.add(file);
       fileInput.files = dataTransfer.files;
@@ -318,15 +466,16 @@ function initializeCoverUpload() {
       updateFileInfo();
       previewImage(file);
     }
-  }
+  });
 
-  function handleFileChange() {
+  // Handle file selection
+  fileInput.addEventListener("change", function () {
     if (fileInput.files.length > 0) {
       const file = fileInput.files[0];
 
       if (!isValidImageFile(file.name)) {
         showAlert(
-          "Format file tidak didukung! Gunakan JPG, PNG, atau WEBP.",
+          "Format file tidak didukung. Gunakan JPG, PNG, atau WEBP",
           "error"
         );
         fileInput.value = "";
@@ -335,7 +484,7 @@ function initializeCoverUpload() {
       }
 
       if (file.size > 5 * 1024 * 1024) {
-        showAlert("Ukuran file terlalu besar! Maksimal 5MB.", "error");
+        showAlert("Ukuran file terlalu besar. Maksimal 5MB", "error");
         fileInput.value = "";
         updateFileInfo();
         return;
@@ -346,7 +495,7 @@ function initializeCoverUpload() {
     } else {
       updateFileInfo();
     }
-  }
+  });
 
   function updateFileInfo() {
     if (fileInput.files.length > 0) {
@@ -379,107 +528,24 @@ function initializeCoverUpload() {
       const preview = document.createElement("div");
       preview.className = "image-preview";
       preview.innerHTML = `
-                <p style="margin: 0 0 8px 0; font-weight: 600; color: var(--dark);">Preview:</p>
-                <img src="${e.target.result}" alt="Preview" style="max-width: 150px; max-height: 150px; border-radius: 8px; border: 2px solid var(--border);">
-            `;
+        <p style="margin: 0 0 8px 0; font-weight: 600; color: var(--dark);">
+          Preview:
+        </p>
+        <img src="${e.target.result}" alt="Preview" style="max-width: 150px; max-height: 150px; border-radius: 8px; border: 2px solid var(--border);">
+      `;
       coverImageUpload.appendChild(preview);
     };
     reader.readAsDataURL(file);
   }
 
   function isValidImageFile(filename) {
-    const allowedExtensions = ["jpg", "jpeg", "png", "webp"];
+    const allowedExtensions = ["jpg", "jpeg", "png", "webp", "gif"];
     const extension = filename.toLowerCase().split(".").pop();
     return allowedExtensions.includes(extension);
   }
 }
 
-function initializeSearchableSelects() {
-  initializeSearchableSelect("artistSearch", "artist_id");
-  initializeSearchableSelect("albumSearch", "album_id");
-  initializeSearchableSelect("genreSearch", "genre_id");
-}
-
-function initializeSearchableSelect(searchId, selectId) {
-  const searchInput = document.getElementById(searchId);
-  const selectDropdown = document.getElementById(selectId);
-
-  if (!searchInput || !selectDropdown) return;
-
-  // Remove existing listeners
-  searchInput.removeEventListener("focus", handleSearchFocus);
-  searchInput.removeEventListener("blur", handleSearchBlur);
-  searchInput.removeEventListener("input", handleSearchInput);
-  selectDropdown.removeEventListener("change", handleSelectChange);
-
-  // Add event listeners
-  searchInput.addEventListener("focus", handleSearchFocus);
-  searchInput.addEventListener("blur", handleSearchBlur);
-  searchInput.addEventListener("input", handleSearchInput);
-  selectDropdown.addEventListener("change", handleSelectChange);
-
-  // Initialize search input value
-  updateSearchInput();
-
-  function handleSearchFocus() {
-    selectDropdown.style.display = "block";
-    selectDropdown.size = Math.min(selectDropdown.options.length, 6);
-
-    // Show all options initially
-    Array.from(selectDropdown.options).forEach((option) => {
-      option.style.display = "";
-    });
-  }
-
-  function handleSearchBlur() {
-    setTimeout(() => {
-      selectDropdown.style.display = "none";
-      selectDropdown.size = 1;
-    }, 200);
-  }
-
-  function handleSearchInput() {
-    const searchTerm = this.value.toLowerCase();
-    const options = Array.from(selectDropdown.options);
-
-    options.forEach((option) => {
-      const text = option.textContent.toLowerCase();
-      if (text.includes(searchTerm) || option.value === "") {
-        option.style.display = "";
-      } else {
-        option.style.display = "none";
-      }
-    });
-
-    // Auto-select first visible option if search matches exactly
-    const visibleOptions = options.filter(
-      (opt) => opt.style.display !== "none" && opt.value !== ""
-    );
-
-    if (
-      visibleOptions.length === 1 &&
-      visibleOptions[0].textContent.toLowerCase() === searchTerm
-    ) {
-      selectDropdown.value = visibleOptions[0].value;
-      updateSearchInput();
-    }
-  }
-
-  function handleSelectChange() {
-    updateSearchInput();
-  }
-
-  function updateSearchInput() {
-    if (selectDropdown.value) {
-      const selectedOption =
-        selectDropdown.options[selectDropdown.selectedIndex];
-      searchInput.value = selectedOption.textContent;
-      searchInput.setCustomValidity("");
-    } else {
-      searchInput.value = "";
-    }
-  }
-}
+// DURATION INPUTS
 
 function initializeDurationInputs() {
   const minutesInput = document.getElementById("duration_minutes");
@@ -500,7 +566,48 @@ function initializeDurationInputs() {
       this.value = value;
     });
   }
+
+  // Add manual duration calculation helper
+  addDurationCalculator();
 }
+
+function addDurationCalculator() {
+  // Create duration calculator button if not exists
+  const durationGroup = document.querySelector(".duration-inputs");
+  if (!durationGroup) return;
+
+  // Check if calculator already exists
+
+  durationGroup.parentNode.insertBefore(calculator, durationGroup.nextSibling);
+
+  // Add calculator functionality
+  document
+    .getElementById("calculateDuration")
+    .addEventListener("click", function () {
+      const minutes = prompt("Masukkan menit:", "0");
+      const seconds = prompt("Masukkan detik:", "0");
+
+      if (minutes !== null && seconds !== null) {
+        const min = parseInt(minutes) || 0;
+        const sec = parseInt(seconds) || 0;
+
+        if (min < 0 || sec < 0 || sec > 59) {
+          showAlert(
+            "Format durasi tidak valid. Detik harus antara 0-59",
+            "error"
+          );
+          return;
+        }
+
+        document.getElementById("duration_minutes").value = min;
+        document.getElementById("duration_seconds").value = sec;
+
+        showAlert(`Durasi diatur: ${min}m ${sec}s`, "success");
+      }
+    });
+}
+
+// HELPER FUNCTIONS
 
 function formatTime(seconds) {
   const minutes = Math.floor(seconds / 60);
@@ -508,9 +615,88 @@ function formatTime(seconds) {
   return `${minutes}:${remainingSeconds.toString().padStart(2, "0")}`;
 }
 
-// Confirm delete function
+function showAlert(message, type = "info") {
+  // Remove existing alerts
+  const existingAlerts = document.querySelectorAll(".temp-alert");
+  existingAlerts.forEach((alert) => alert.remove());
+
+  // Create alert element
+  const alertDiv = document.createElement("div");
+  alertDiv.className = `temp-alert alert alert-${type}`;
+  alertDiv.style.cssText = `
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    padding: 12px 18px;
+    border-radius: 8px;
+    z-index: 9999;
+    animation: slideIn 0.3s ease;
+    font-size: 0.9rem;
+    max-width: 300px;
+  `;
+
+  const icon =
+    type === "success"
+      ? "check-circle"
+      : type === "error"
+      ? "exclamation-circle"
+      : type === "warning"
+      ? "exclamation-triangle"
+      : "info-circle";
+
+  alertDiv.innerHTML = `
+    <i class="fas fa-${icon}" style="margin-right: 8px;"></i>
+    ${message}
+  `;
+
+  // Add to body
+  document.body.appendChild(alertDiv);
+
+  // Add CSS animation if not exists
+  if (!document.querySelector("#alert-animations")) {
+    const style = document.createElement("style");
+    style.id = "alert-animations";
+    style.textContent = `
+      @keyframes slideIn {
+        from {
+          transform: translateX(100%);
+          opacity: 0;
+        }
+        to {
+          transform: translateX(0);
+          opacity: 1;
+        }
+      }
+      @keyframes slideOut {
+        from {
+          transform: translateX(0);
+          opacity: 1;
+        }
+        to {
+          transform: translateX(100%);
+          opacity: 0;
+        }
+      }
+    `;
+    document.head.appendChild(style);
+  }
+
+  // Remove after 5 seconds
+  setTimeout(() => {
+    alertDiv.style.animation = "slideOut 0.3s ease";
+    setTimeout(() => {
+      alertDiv.remove();
+    }, 300);
+  }, 5000);
+}
+
+// DELETE CONFIRMATION
+
 function confirmDelete(songId) {
   if (confirm("Apakah Anda yakin ingin menghapus lagu ini?")) {
-    window.location.href = "songs.php?action=delete&id=" + songId;
+    window.location.href = `songs.php?action=delete&id=${songId}`;
   }
 }
+
+// Make function globally available
+window.confirmDelete = confirmDelete;

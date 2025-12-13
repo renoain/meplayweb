@@ -1,6 +1,5 @@
 <?php
-// admin/includes/sidebar.php
-$current_page = basename($_SERVER['PHP_SELF']);
+ $current_page = basename($_SERVER['PHP_SELF']);
 ?>
 <nav class="admin-sidebar">
     <div class="sidebar-header">
@@ -39,6 +38,13 @@ $current_page = basename($_SERVER['PHP_SELF']);
             <a href="albums.php">
                 <i class="fas fa-compact-disc"></i>
                 <span>Album</span>
+            </a>
+        </li>
+
+         <li class="menu-item <?php echo $current_page == 'genres.php' ? 'active' : ''; ?>">
+            <a href="genres.php">
+                <i class="fas fa-tag"></i>
+                <span>Genre</span>
             </a>
         </li>
     </ul>

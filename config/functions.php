@@ -238,4 +238,134 @@ function createPlaylistDirectory() {
     }
     return $playlist_dir;
 }
+
+function getUserStats($user_id) {
+    try {
+        $database = new Database();
+        $conn = $database->getConnection();
+        
+        $stats = [
+            'liked_songs' => 0,
+            'playlists' => 0,
+            'total_plays' => 0,
+            'followed_artists' => 0
+        ];
+        
+        // Count liked songs
+        $stmt = $conn->prepare("SELECT COUNT(*) FROM liked_songs WHERE user_id = ?");
+        $stmt->execute([$user_id]);
+        $stats['liked_songs'] = $stmt->fetchColumn();
+        
+        // Count playlists
+        $stmt = $conn->prepare("SELECT COUNT(*) FROM playlists WHERE user_id = ?");
+        $stmt->execute([$user_id]);
+        $stats['playlists'] = $stmt->fetchColumn();
+        
+        // Count total plays
+        $stmt = $conn->prepare("SELECT COUNT(*) FROM recently_played WHERE user_id = ?");
+        $stmt->execute([$user_id]);
+        $stats['total_plays'] = $stmt->fetchColumn();
+        
+        // Count followed artists
+        $stmt = $conn->prepare("SELECT COUNT(*) FROM artist_followers WHERE user_id = ?");
+        $stmt->execute([$user_id]);
+        $stats['followed_artists'] = $stmt->fetchColumn();
+        
+        return $stats;
+    } catch (PDOException $e) {
+        error_log("Get user stats error: " . $e->getMessage());
+        return [
+            'liked_songs' => 0,
+            'playlists' => 0,
+            'total_plays' => 0,
+            'followed_artists' => 0
+        ];
+    }
+}
+
+/**
+ * Get user recent activity
+ */
+function getUserRecentActivity($user_id, $limit = 10) {
+    try {
+        $database = new Database();
+        $conn = $database->getConnection();
+        
+        $query = "SELECT 
+                    rp.id,
+                    rp.song_id,
+                    rp.played_at,
+                    s.title as song_title,
+                    s.cover_image,
+                    a.name as artist_name,
+                    al.title as album_title
+                 FROM recently_played rp
+                 LEFT JOIN songs s ON rp.song_id = s.id
+                 LEFT JOIN artists a ON s.artist_id = a.id
+                 LEFT JOIN albums al ON s.album_id = al.id
+                 WHERE rp.user_id = ?
+                 ORDER BY rp.played_at DESC
+                 LIMIT ?";
+        
+        $stmt = $conn->prepare($query);
+        $stmt->bindValue(1, $user_id, PDO::PARAM_INT);
+        $stmt->bindValue(2, $limit, PDO::PARAM_INT);
+        $stmt->execute();
+        
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    } catch (PDOException $e) {
+        error_log("Get user activity error: " . $e->getMessage());
+        return [];
+    }
+}
+
+/**
+ * Validate username availability
+ */
+function isUsernameAvailable($username, $exclude_user_id = null) {
+    try {
+        $database = new Database();
+        $conn = $database->getConnection();
+        
+        if ($exclude_user_id) {
+            $query = "SELECT COUNT(*) FROM users WHERE username = ? AND id != ?";
+            $stmt = $conn->prepare($query);
+            $stmt->execute([$username, $exclude_user_id]);
+        } else {
+            $query = "SELECT COUNT(*) FROM users WHERE username = ?";
+            $stmt = $conn->prepare($query);
+            $stmt->execute([$username]);
+        }
+        
+        return $stmt->fetchColumn() == 0;
+    } catch (PDOException $e) {
+        error_log("Check username error: " . $e->getMessage());
+        return false;
+    }
+}
+
+/**
+ * Validate email availability
+ */
+function isEmailAvailable($email, $exclude_user_id = null) {
+    try {
+        $database = new Database();
+        $conn = $database->getConnection();
+        
+        if ($exclude_user_id) {
+            $query = "SELECT COUNT(*) FROM users WHERE email = ? AND id != ?";
+            $stmt = $conn->prepare($query);
+            $stmt->execute([$email, $exclude_user_id]);
+        } else {
+            $query = "SELECT COUNT(*) FROM users WHERE email = ?";
+            $stmt = $conn->prepare($query);
+            $stmt->execute([$email]);
+        }
+        
+        return $stmt->fetchColumn() == 0;
+    } catch (PDOException $e) {
+        error_log("Check email error: " . $e->getMessage());
+        return false;
+    }
+}
 ?>

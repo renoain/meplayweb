@@ -1,6 +1,5 @@
 <?php
-// Enable error reporting
-error_reporting(E_ALL);
+ error_reporting(E_ALL);
 ini_set('display_errors', 1);
 
 require_once '../config/constants.php';
@@ -459,6 +458,17 @@ function getDurationValue($edit_song, $post_data, $type = 'minutes') {
     // Default: 0
     return 0;
 }
+
+// Helper function to get selected value
+function getSelectedValue($field, $edit_song, $post_data, $value) {
+    if ($edit_song && $edit_song[$field] == $value) {
+        return 'selected';
+    }
+    if (isset($post_data[$field]) && $post_data[$field] == $value) {
+        return 'selected';
+    }
+    return '';
+}
 ?>
 
 <!DOCTYPE html>
@@ -474,7 +484,7 @@ function getDurationValue($edit_song, $post_data, $type = 'minutes') {
 </head>
 <body>
     <div class="admin-container">
-        <!-- Sidebar -->
+        
         <?php include 'includes/sidebar.php'; ?>
 
         <!-- Main Content -->
@@ -506,7 +516,7 @@ function getDurationValue($edit_song, $post_data, $type = 'minutes') {
                     <div class="form-card">
                         <div class="card-header">
                             <h3>
-                                <i class="fas fa-<?php echo $edit_song ? 'edit' : 'plus'; ?>"></i>
+                                <i class="fas fa-<?php echo $edit_song ? 'edit' : ''; ?>"></i>
                                 <?php echo $edit_song ? 'Edit Lagu' : 'Tambah Lagu Baru'; ?>
                             </h3>
                             <?php if ($edit_song): ?>
@@ -522,100 +532,145 @@ function getDurationValue($edit_song, $post_data, $type = 'minutes') {
                                 <?php endif; ?>
 
                                 <div class="form-grid">
+                                    <!-- Title -->
                                     <div class="form-group">
-                                        <label for="title">Judul Lagu *</label>
+                                        <label for="title">Judul Lagu </label>
                                         <input type="text" id="title" name="title" required
                                                value="<?php echo $edit_song ? htmlspecialchars($edit_song['title']) : (isset($_POST['title']) ? htmlspecialchars($_POST['title']) : ''); ?>"
                                                placeholder="Masukkan judul lagu">
                                     </div>
 
+                                    <!-- Artist -->
                                     <div class="form-group">
-                                        <label for="artist_id">Artis *</label>
+                                        <label for="artist_id">Artis</label>
                                         <div class="searchable-select">
                                             <div class="select-search">
-                                                <input type="text" class="search-input" placeholder="Ketik untuk mencari artis..." id="artistSearch" required>
+                                                <input type="text" class="search-input artist-search" 
+                                                       placeholder="Ketik untuk mencari artis..." 
+                                                       id="artistSearch"
+                                                       autocomplete="off"
+                                                       value="<?php 
+                                                           if ($edit_song && $edit_song['artist_name']) {
+                                                               echo htmlspecialchars($edit_song['artist_name']);
+                                                           } elseif (isset($_POST['artist_id']) && $_POST['artist_id']) {
+                                                               foreach ($artists as $artist) {
+                                                                   if ($artist['id'] == $_POST['artist_id']) {
+                                                                       echo htmlspecialchars($artist['name']);
+                                                                       break;
+                                                                   }
+                                                               }
+                                                           }
+                                                       ?>"
+                                                       required>
                                                 <i class="fas fa-search"></i>
                                             </div>
                                             <select id="artist_id" name="artist_id" class="select-dropdown" required>
                                                 <option value="">Pilih Artis</option>
                                                 <?php foreach ($artists as $artist): ?>
                                                     <option value="<?php echo $artist['id']; ?>"
-                                                        data-name="<?php echo htmlspecialchars($artist['name']); ?>"
-                                                        <?php echo ($edit_song && $edit_song['artist_id'] == $artist['id']) || (isset($_POST['artist_id']) && $_POST['artist_id'] == $artist['id']) ? 'selected' : ''; ?>>
+                                                        <?php echo getSelectedValue('artist_id', $edit_song, $_POST, $artist['id']); ?>>
                                                         <?php echo htmlspecialchars($artist['name']); ?>
                                                     </option>
                                                 <?php endforeach; ?>
                                             </select>
                                         </div>
-                                        <small class="form-help">Wajib dipilih</small>
-                                    </div>
+                                     </div>
 
+                                    <!-- Album -->
                                     <div class="form-group">
                                         <label for="album_id">Album</label>
                                         <div class="searchable-select">
                                             <div class="select-search">
-                                                <input type="text" class="search-input" placeholder="Ketik untuk mencari album..." id="albumSearch">
+                                                <input type="text" class="search-input album-search" 
+                                                       placeholder="Ketik untuk mencari album..." 
+                                                       id="albumSearch"
+                                                       autocomplete="off"
+                                                       value="<?php 
+                                                           if ($edit_song && $edit_song['album_title']) {
+                                                               echo htmlspecialchars($edit_song['album_title']);
+                                                           } elseif (isset($_POST['album_id']) && $_POST['album_id']) {
+                                                               foreach ($albums as $album) {
+                                                                   if ($album['id'] == $_POST['album_id']) {
+                                                                       echo htmlspecialchars($album['title']);
+                                                                       break;
+                                                                   }
+                                                               }
+                                                           }
+                                                       ?>">
                                                 <i class="fas fa-search"></i>
                                             </div>
                                             <select id="album_id" name="album_id" class="select-dropdown">
                                                 <option value="">Pilih Album (Opsional)</option>
                                                 <?php foreach ($albums as $album): ?>
                                                     <option value="<?php echo $album['id']; ?>"
-                                                        data-name="<?php echo htmlspecialchars($album['title']); ?>"
-                                                        <?php echo ($edit_song && $edit_song['album_id'] == $album['id']) || (isset($_POST['album_id']) && $_POST['album_id'] == $album['id']) ? 'selected' : ''; ?>>
+                                                        <?php echo getSelectedValue('album_id', $edit_song, $_POST, $album['id']); ?>>
                                                         <?php echo htmlspecialchars($album['title']); ?>
                                                     </option>
                                                 <?php endforeach; ?>
                                             </select>
                                         </div>
-                                        <small class="form-help">Opsional</small>
-                                    </div>
+                                     </div>
 
+                                    <!-- Genre -->
                                     <div class="form-group">
                                         <label for="genre_id">Genre</label>
                                         <div class="searchable-select">
                                             <div class="select-search">
-                                                <input type="text" class="search-input" placeholder="Ketik untuk mencari genre..." id="genreSearch">
+                                                <input type="text" class="search-input genre-search" 
+                                                       placeholder="Ketik untuk mencari genre..." 
+                                                       id="genreSearch"
+                                                       autocomplete="off"
+                                                       value="<?php 
+                                                           if ($edit_song && $edit_song['genre_name']) {
+                                                               echo htmlspecialchars($edit_song['genre_name']);
+                                                           } elseif (isset($_POST['genre_id']) && $_POST['genre_id']) {
+                                                               foreach ($genres as $genre) {
+                                                                   if ($genre['id'] == $_POST['genre_id']) {
+                                                                       echo htmlspecialchars($genre['name']);
+                                                                       break;
+                                                                   }
+                                                               }
+                                                           }
+                                                       ?>">
                                                 <i class="fas fa-search"></i>
                                             </div>
                                             <select id="genre_id" name="genre_id" class="select-dropdown">
-                                                <option value="">Pilih Genre (Opsional)</option>
+                                                <option value="">Pilih Genre </option>
                                                 <?php foreach ($genres as $genre): ?>
                                                     <option value="<?php echo $genre['id']; ?>"
-                                                        data-name="<?php echo htmlspecialchars($genre['name']); ?>"
-                                                        <?php echo ($edit_song && $edit_song['genre_id'] == $genre['id']) || (isset($_POST['genre_id']) && $_POST['genre_id'] == $genre['id']) ? 'selected' : ''; ?>>
+                                                        <?php echo getSelectedValue('genre_id', $edit_song, $_POST, $genre['id']); ?>>
                                                         <?php echo htmlspecialchars($genre['name']); ?>
                                                     </option>
                                                 <?php endforeach; ?>
                                             </select>
                                         </div>
-                                        <small class="form-help">Opsional</small>
-                                    </div>
+                                     </div>
 
+                                    <!-- Duration -->
                                     <div class="form-group">
-                                        <label for="duration">Durasi *</label>
+                                        <label for="duration">Durasi</label>
                                         <div class="duration-inputs">
                                             <div class="duration-group">
                                                 <input type="number" id="duration_minutes" name="duration_minutes" 
                                                        min="0" max="59" 
                                                        value="<?php echo htmlspecialchars(getDurationValue($edit_song, $_POST, 'minutes')); ?>"
-                                                       placeholder="0">
+                                                       placeholder="0" required>
                                                 <label for="duration_minutes">Menit</label>
                                             </div>
                                             <div class="duration-group">
                                                 <input type="number" id="duration_seconds" name="duration_seconds" 
                                                        min="0" max="59" 
                                                        value="<?php echo htmlspecialchars(getDurationValue($edit_song, $_POST, 'seconds')); ?>"
-                                                       placeholder="0">
+                                                       placeholder="0" required>
                                                 <label for="duration_seconds">Detik</label>
                                             </div>
                                         </div>
-                                        <small class="form-help">Contoh: 3 menit 45 detik</small>
-                                    </div>
+                                     </div>
                                 </div>
 
+                                <!-- Audio File -->
                                 <div class="form-group">
-                                    <label for="audio_file">File Audio *</label>
+                                    <label for="audio_file">File Audio </label>
                                     <div class="file-upload" id="audioUpload">
                                         <div class="upload-icon">
                                             <i class="fas fa-file-audio"></i>
@@ -630,7 +685,7 @@ function getDurationValue($edit_song, $post_data, $type = 'minutes') {
                                     <?php if ($edit_song && $edit_song['audio_file']): ?>
                                         <div class="current-file">
                                             <p><strong>File Audio Saat Ini:</strong> <?php echo htmlspecialchars($edit_song['audio_file']); ?></p>
-                                            <audio controls style="width: 100%; max-width: 400px; margin: 10px 0;">
+                                            <audio controls class="audio-preview">
                                                 <source src="../uploads/audio/<?php echo $edit_song['audio_file']; ?>" type="audio/mpeg">
                                                 Browser Anda tidak mendukung pemutar audio.
                                             </audio>
@@ -638,6 +693,7 @@ function getDurationValue($edit_song, $post_data, $type = 'minutes') {
                                     <?php endif; ?>
                                 </div>
 
+                                <!-- Cover Image -->
                                 <div class="form-group">
                                     <label for="cover_image">Cover Lagu</label>
                                     <div class="file-upload" id="coverImageUpload">
@@ -701,8 +757,8 @@ function getDurationValue($edit_song, $post_data, $type = 'minutes') {
                                                 <th>Artis</th>
                                                 <th>Album</th>
                                                 <th>Genre</th>
-                                                <th>Durasi</th>
-                                                <th>Aksi</th>
+                                                <th>Duration</th>
+                                                <th>Option</th>
                                             </tr>
                                         </thead>
                                         <tbody>
@@ -775,5 +831,12 @@ function getDurationValue($edit_song, $post_data, $type = 'minutes') {
 
     <script src="assets/js/admin-main.js"></script>
     <script src="assets/js/admin-songs.js"></script>
+    <script>
+    function confirmDelete(songId) {
+        if (confirm('Apakah Anda yakin ingin menghapus lagu ini?')) {
+            window.location.href = 'songs.php?action=delete&id=' + songId;
+        }
+    }
+    </script>
 </body>
 </html>

@@ -1,6 +1,5 @@
 <?php
-// index.php
-require_once 'config/constants.php';
+ require_once 'config/constants.php';
 require_once 'config/auth.php';
 require_once 'config/functions.php';
 
@@ -13,6 +12,7 @@ if (!$auth->isLoggedIn()) {
 // Get recent songs, popular songs, etc.
 $database = new Database();
 $conn = $database->getConnection();
+$user_id = $_SESSION['user_id'];
 
 // Get recently added songs
 $query = "SELECT s.*, a.name as artist_name, al.title as album_title, g.name as genre_name 
@@ -38,8 +38,20 @@ $query = "SELECT s.*, a.name as artist_name, al.title as album_title, g.name as 
 $popular_songs_stmt = $conn->prepare($query);
 $popular_songs_stmt->execute();
 
+// Get recent albums
+$query = "SELECT al.*, a.name as artist_name, 
+          COUNT(s.id) as song_count
+          FROM albums al
+          LEFT JOIN artists a ON al.artist_id = a.id
+          LEFT JOIN songs s ON s.album_id = al.id
+          WHERE al.is_active = 1
+          GROUP BY al.id
+          ORDER BY al.created_at DESC
+          LIMIT 6";
+$recent_albums_stmt = $conn->prepare($query);
+$recent_albums_stmt->execute();
+
 // Get user's playlists for dropdown
-$user_id = $_SESSION['user_id'];
 $query = "SELECT id, title FROM playlists WHERE user_id = ?";
 $playlists_stmt = $conn->prepare($query);
 $playlists_stmt->execute([$user_id]);
@@ -62,6 +74,7 @@ $liked_songs = $liked_stmt->fetchAll(PDO::FETCH_COLUMN);
     <link rel="stylesheet" href="assets/css/home.css">
     <link rel="stylesheet" href="assets/css/sidebar.css">
     <link rel="stylesheet" href="assets/css/player.css">
+    <link rel="stylesheet" href="assets/css/header-search.css">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
 </head>
 <body data-theme="<?php echo getCurrentTheme(); ?>">
@@ -71,87 +84,82 @@ $liked_songs = $liked_stmt->fetchAll(PDO::FETCH_COLUMN);
         <?php include 'includes/header.php'; ?>
         
         <div class="content">
-            <div class="welcome-section">
-                <h1>Welcome back, <?php echo htmlspecialchars($_SESSION['username']); ?>!</h1>
-                <p>Discover new music and enjoy your favorites</p>
-            </div>
 
+            <!-- Recently Added Section -->
             <section class="section">
-                <h2>Recently Added</h2>
+                <div class="section-header">
+                    <h2><i class="fas fa-clock"></i> Recently Added</h2>
+                </div>
                 <div class="songs-grid">
                     <?php while($song = $recent_songs_stmt->fetch(PDO::FETCH_ASSOC)): 
                         $is_liked = in_array($song['id'], $liked_songs);
                     ?>
                     <div class="song-card" data-song-id="<?php echo $song['id']; ?>">
                         <div class="song-cover">
-                            <img src="<?php echo getCoverPath($song['cover_image'], 'song'); ?>" alt="<?php echo htmlspecialchars($song['title']); ?>">
-                            <button class="play-btn">
-                                <i class="fas fa-play"></i>
-                            </button>
+                            <img src="<?php echo getCoverPath($song['cover_image'], 'song'); ?>" 
+                                 alt="<?php echo htmlspecialchars($song['title']); ?>"
+                                 loading="lazy"
+                                 onerror="this.src='assets/images/covers/default-cover.png'">
+                            <div class="song-overlay">
+                                <button class="play-btn" data-song-id="<?php echo $song['id']; ?>">
+                                    <i class="fas fa-play"></i>
+                                </button>
+                            </div>
                         </div>
                         <div class="song-info">
-                            <h3><?php echo htmlspecialchars($song['title']); ?></h3>
-                            <p><?php echo htmlspecialchars($song['artist_name']); ?></p>
-                        </div>
-                        <div class="song-actions">
-                                <button class="more-btn">
-                                    <i class="fas fa-ellipsis-v"></i>
-                                </button>
-                                <div class="dropdown-menu">
-                                    <button class="dropdown-item like-song" data-song-id="<?php echo $song['id']; ?>">
-                                        <i class="far fa-heart"></i> Like
-                                    </button>
-                                <button class="dropdown-item add-to-queue" data-song-id="<?php echo $song['id']; ?>">
-                                    <i class="fas fa-list"></i> Add to Queue
-                                </button>
-                                <div class="dropdown-submenu">
-                                    <button class="dropdown-item">
-                                        <i class="fas fa-plus"></i> Add to Playlist
-                                        <i class="fas fa-chevron-right"></i>
-                                    </button>
-                                    <div class="submenu">
-                                        <?php if ($user_playlists): ?>
-                                            <?php foreach ($user_playlists as $playlist): ?>
-                                                <button class="dropdown-item add-to-playlist" 
-                                                        data-song-id="<?php echo $song['id']; ?>" 
-                                                        data-playlist-id="<?php echo $playlist['id']; ?>">
-                                                    <?php echo htmlspecialchars($playlist['title']); ?>
-                                                </button>
-                                            <?php endforeach; ?>
-                                        <?php else: ?>
-                                            <button class="dropdown-item disabled">No playlists</button>
-                                        <?php endif; ?>
-                                        <button class="dropdown-item create-playlist" data-song-id="<?php echo $song['id']; ?>">
-                                            <i class="fas fa-plus-circle"></i> Create New Playlist
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
+                            <h3 title="<?php echo htmlspecialchars($song['title']); ?>">
+                                <?php echo htmlspecialchars($song['title']); ?>
+                            </h3>
+                            <p title="<?php echo htmlspecialchars($song['artist_name']); ?>">
+                                <?php echo htmlspecialchars($song['artist_name']); ?>
+                            </p>
                         </div>
                     </div>
                     <?php endwhile; ?>
                 </div>
             </section>
 
+            <!-- Popular Songs Section -->
             <section class="section">
-                <h2>Popular Songs</h2>
+                <div class="section-header">
+                    <h2><i class="fas fa-fire"></i> Popular Songs</h2>
+                </div>
                 <div class="songs-list">
+                    <?php $counter = 1; ?>
                     <?php while($song = $popular_songs_stmt->fetch(PDO::FETCH_ASSOC)): 
                         $is_liked = in_array($song['id'], $liked_songs);
                     ?>
-                    <div class="song-item" data-song-id="<?php echo $song['id']; ?>">
-                        <div class="song-number"><?php echo $song['play_count']; ?> plays</div>
+                    <div class="song-item" data-song-id="<?php echo $song['id']; ?>" data-index="<?php echo $counter - 1; ?>">
+                        <div class="song-number">
+                            <span class="song-rank"><?php echo $counter++; ?></span>
+                        </div>
+                        <div class="song-cover-small">
+                            <img src="<?php echo getCoverPath($song['cover_image'], 'song'); ?>" 
+                                 alt="<?php echo htmlspecialchars($song['title']); ?>"
+                                 loading="lazy"
+                                 onerror="this.src='assets/images/covers/default-cover.png'">
+                        </div>
                         <div class="song-info">
                             <h4><?php echo htmlspecialchars($song['title']); ?></h4>
                             <p><?php echo htmlspecialchars($song['artist_name']); ?></p>
                         </div>
-                        <div class="song-duration"><?php echo formatDuration($song['duration']); ?></div>
+                        <div class="song-meta">
+                            <span class="play-count"><i class="fas fa-play"></i> <?php echo $song['play_count']; ?></span>
+                            <span class="song-duration"><?php echo formatDuration($song['duration']); ?></span>
+                        </div>
                         <div class="song-actions">
-                            <button class="more-btn">
+                            <button class="like-btn <?php echo $is_liked ? 'liked' : ''; ?>" 
+                                    data-song-id="<?php echo $song['id']; ?>"
+                                    title="<?php echo $is_liked ? 'Unlike' : 'Like'; ?>">
+                                <i class="<?php echo $is_liked ? 'fas' : 'far'; ?> fa-heart"></i>
+                            </button>
+                            <button class="more-btn" data-song-id="<?php echo $song['id']; ?>">
                                 <i class="fas fa-ellipsis-v"></i>
                             </button>
-                            <div class="dropdown-menu">
-                                <button class="dropdown-item like-song <?php echo $is_liked ? 'liked' : ''; ?>" 
+                            
+                            <!-- Dropdown Menu -->
+                            <div class="song-dropdown" id="dropdown-<?php echo $song['id']; ?>">
+                                <button class="dropdown-item like-song <?php echo $is_liked ? 'liked text-danger' : ''; ?>" 
                                         data-song-id="<?php echo $song['id']; ?>">
                                     <i class="<?php echo $is_liked ? 'fas' : 'far'; ?> fa-heart"></i> 
                                     <?php echo $is_liked ? 'Unlike' : 'Like'; ?>
@@ -160,7 +168,7 @@ $liked_songs = $liked_stmt->fetchAll(PDO::FETCH_COLUMN);
                                     <i class="fas fa-list"></i> Add to Queue
                                 </button>
                                 <div class="dropdown-submenu">
-                                    <button class="dropdown-item">
+                                    <button class="dropdown-item submenu-trigger">
                                         <i class="fas fa-plus"></i> Add to Playlist
                                         <i class="fas fa-chevron-right"></i>
                                     </button>
@@ -187,6 +195,38 @@ $liked_songs = $liked_stmt->fetchAll(PDO::FETCH_COLUMN);
                     <?php endwhile; ?>
                 </div>
             </section>
+
+            <!-- Recent Albums Section -->
+            <?php if($recent_albums_stmt->rowCount() > 0): ?>
+            <section class="section">
+                <div class="section-header">
+                    <h2><i class="fas fa-compact-disc"></i> Recent Albums</h2>
+                </div>
+                <div class="albums-grid">
+                    <?php while($album = $recent_albums_stmt->fetch(PDO::FETCH_ASSOC)): ?>
+                    <!-- PERBAIKAN LINK: ke album_detail.php -->
+                    <a href="album_detail.php?id=<?php echo $album['id']; ?>" class="album-card" data-album-id="<?php echo $album['id']; ?>">
+                        <div class="album-cover">
+                            <img src="<?php echo getCoverPath($album['cover_image'], 'album'); ?>" 
+                                 alt="<?php echo htmlspecialchars($album['title']); ?>"
+                                 loading="lazy"
+                                 onerror="this.src='assets/images/covers/default-cover.png'">
+                            <div class="album-overlay">
+                                <i class="fas fa-play"></i>
+                            </div>
+                        </div>
+                        <div class="album-info">
+                            <h3><?php echo htmlspecialchars($album['title']); ?></h3>
+                            <p><?php echo htmlspecialchars($album['artist_name']); ?></p>
+                            <?php if($album['song_count'] > 0): ?>
+                            <span class="album-songs"><?php echo $album['song_count']; ?> songs</span>
+                            <?php endif; ?>
+                        </div>
+                    </a>
+                    <?php endwhile; ?>
+                </div>
+            </section>
+            <?php endif; ?>
         </div>
     </div>
 
@@ -202,12 +242,14 @@ $liked_songs = $liked_stmt->fetchAll(PDO::FETCH_COLUMN);
             <div class="modal-body">
                 <form id="createPlaylistForm">
                     <div class="form-group">
-                        <label for="playlistTitle">Playlist Title</label>
-                        <input type="text" id="playlistTitle" name="title" required>
+                        <label for="playlistTitle">Playlist Title *</label>
+                        <input type="text" id="playlistTitle" name="title" required 
+                               placeholder="Enter playlist name">
                     </div>
                     <div class="form-group">
                         <label for="playlistDescription">Description (Optional)</label>
-                        <textarea id="playlistDescription" name="description"></textarea>
+                        <textarea id="playlistDescription" name="description" 
+                                  placeholder="Describe your playlist..." rows="3"></textarea>
                     </div>
                     <input type="hidden" id="songIdForPlaylist" name="song_id">
                     <div class="form-actions">
@@ -222,5 +264,8 @@ $liked_songs = $liked_stmt->fetchAll(PDO::FETCH_COLUMN);
     <script src="assets/js/main.js"></script>
     <script src="assets/js/player.js"></script>
     <script src="assets/js/likes.js"></script>
+    <script src="assets/js/home.js"></script>
+    <script src="assets/js/header-search.js"></script>
+
 </body>
 </html>

@@ -1,33 +1,36 @@
-/* assets/css/playlists.css */
 .page-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
   margin-bottom: 2rem;
+  padding-bottom: 1.5rem;
+  border-bottom: 1px solid var(--border-color);
 }
 
 .page-header h1 {
   font-size: 2rem;
   color: var(--text-primary);
+  font-weight: 700;
 }
 
 .playlists-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
   gap: 1.5rem;
 }
 
 .playlist-card {
   background-color: var(--bg-secondary);
   border-radius: 0.75rem;
-  padding: 1rem;
+  padding: 1.25rem;
   transition: all 0.3s ease;
   border: 1px solid var(--border-color);
   position: relative;
+  overflow: hidden;
 }
 
 .playlist-card:hover {
-  transform: translateY(-4px);
+  transform: translateY(-5px);
   box-shadow: var(--shadow-lg);
   background-color: var(--bg-tertiary);
 }
@@ -44,12 +47,18 @@
   border-radius: 0.5rem;
   overflow: hidden;
   aspect-ratio: 1;
+  background-color: var(--bg-primary);
 }
 
 .playlist-cover img {
   width: 100%;
   height: 100%;
   object-fit: cover;
+  transition: transform 0.3s ease;
+}
+
+.playlist-card:hover .playlist-cover img {
+  transform: scale(1.05);
 }
 
 .default-cover {
@@ -63,15 +72,15 @@
 }
 
 .default-cover i {
-  font-size: 2rem;
+  font-size: 2.5rem;
 }
 
 .play-btn {
   position: absolute;
-  bottom: 0.5rem;
-  right: 0.5rem;
-  width: 2.5rem;
-  height: 2.5rem;
+  bottom: 0.75rem;
+  right: 0.75rem;
+  width: 3rem;
+  height: 3rem;
   background-color: var(--accent-color);
   border: none;
   border-radius: 50%;
@@ -84,6 +93,7 @@
   transition: all 0.3s ease;
   cursor: pointer;
   z-index: 2;
+  font-size: 1rem;
 }
 
 .playlist-card:hover .play-btn {
@@ -101,26 +111,27 @@
 }
 
 .playlist-info h3 {
-  font-size: 0.875rem;
+  font-size: 1rem;
   font-weight: 600;
-  margin-bottom: 0.25rem;
+  margin-bottom: 0.5rem;
   color: var(--text-primary);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
-.playlist-info p {
-  font-size: 0.75rem;
+.playlist-info .playlist-description {
+  font-size: 0.875rem;
   color: var(--text-secondary);
-  margin-bottom: 0.5rem;
+  margin-bottom: 0.75rem;
+  line-height: 1.4;
   display: -webkit-box;
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
 
 .playlist-meta {
-  font-size: 0.7rem;
+  font-size: 0.8rem;
   color: var(--text-muted);
   display: flex;
   gap: 0.5rem;
@@ -129,17 +140,17 @@
 
 .playlist-actions {
   position: absolute;
-  top: 0.5rem;
-  right: 0.5rem;
+  top: 0.75rem;
+  right: 0.75rem;
   z-index: 3;
 }
 
 .playlist-actions .more-btn {
-  background-color: rgba(0, 0, 0, 0.6);
+  background-color: rgba(0, 0, 0, 0.7);
   border: none;
   color: white;
-  width: 2rem;
-  height: 2rem;
+  width: 2.25rem;
+  height: 2.25rem;
   border-radius: 50%;
   display: flex;
   align-items: center;
@@ -147,6 +158,7 @@
   cursor: pointer;
   opacity: 0;
   transition: all 0.3s ease;
+  font-size: 0.875rem;
 }
 
 .playlist-card:hover .playlist-actions .more-btn {
@@ -154,7 +166,7 @@
 }
 
 .playlist-actions .more-btn:hover {
-  background-color: rgba(0, 0, 0, 0.8);
+  background-color: rgba(0, 0, 0, 0.9);
   transform: scale(1.1);
 }
 
@@ -166,7 +178,7 @@
   border: 1px solid var(--border-color);
   border-radius: 0.5rem;
   padding: 0.5rem 0;
-  min-width: 160px;
+  min-width: 180px;
   box-shadow: var(--shadow-lg);
   opacity: 0;
   visibility: hidden;
@@ -185,13 +197,13 @@
   display: flex;
   align-items: center;
   gap: 0.75rem;
-  padding: 0.5rem 1rem;
+  padding: 0.75rem 1rem;
   background: none;
   border: none;
   width: 100%;
   text-align: left;
   color: var(--text-primary);
-  font-size: 0.8rem;
+  font-size: 0.875rem;
   cursor: pointer;
   transition: background-color 0.2s;
   text-decoration: none;
@@ -221,44 +233,61 @@
   justify-content: center;
   min-height: 400px;
   text-align: center;
+  background-color: var(--bg-secondary);
+  border-radius: 1rem;
+  padding: 3rem;
 }
 
 .no-playlists-content {
   color: var(--text-secondary);
+  max-width: 400px;
 }
 
 .no-playlists-content i {
-  margin-bottom: 1rem;
+  margin-bottom: 1.5rem;
   color: var(--text-muted);
   opacity: 0.5;
 }
 
 .no-playlists-content h2 {
-  font-size: 1.5rem;
-  margin-bottom: 0.5rem;
+  font-size: 1.75rem;
+  margin-bottom: 0.75rem;
   color: var(--text-primary);
 }
 
 .no-playlists-content p {
   margin-bottom: 2rem;
+  font-size: 1rem;
 }
 
 /* Modal Styles */
 .modal {
-  display: none;
+  display: none !important;
   position: fixed;
   top: 0;
   left: 0;
   width: 100%;
   height: 100%;
   background-color: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(3px);
   z-index: 2000;
   align-items: center;
   justify-content: center;
+  padding: 1rem;
+  animation: fadeIn 0.3s ease;
 }
 
 .modal.show {
-  display: flex;
+  display: flex !important;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 
 .modal-content {
@@ -269,6 +298,19 @@
   max-height: 90vh;
   overflow-y: auto;
   box-shadow: var(--shadow-lg);
+  animation: modalSlideUp 0.3s ease-out;
+  border: 1px solid var(--border-color);
+}
+
+@keyframes modalSlideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .modal-header {
@@ -277,6 +319,7 @@
   align-items: center;
   padding: 1.5rem;
   border-bottom: 1px solid var(--border-color);
+  background-color: var(--bg-secondary);
 }
 
 .modal-header h3 {
@@ -296,6 +339,11 @@
   border-radius: 0.375rem;
   transition: all 0.2s;
   line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
 }
 
 .close-modal:hover {
@@ -345,56 +393,6 @@
   font-family: inherit;
 }
 
-/* File Upload Styles */
-.file-upload {
-  margin-top: 0.5rem;
-}
-
-.upload-preview {
-  width: 150px;
-  height: 150px;
-  margin-bottom: 1rem;
-  border-radius: 0.5rem;
-  overflow: hidden;
-  background-color: var(--bg-secondary);
-  border: 2px dashed var(--border-color);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.upload-preview img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-.default-preview {
-  width: 100%;
-  height: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--text-muted);
-  font-size: 3rem;
-}
-
-.file-input {
-  display: none;
-}
-
-.file-upload-actions {
-  display: flex;
-  gap: 0.75rem;
-  margin-bottom: 0.5rem;
-}
-
-.file-info {
-  font-size: 0.75rem;
-  color: var(--text-muted);
-  margin: 0;
-}
-
 /* Button Styles */
 .btn-primary,
 .btn-secondary,
@@ -410,6 +408,7 @@
   align-items: center;
   gap: 0.5rem;
   text-decoration: none;
+  white-space: nowrap;
 }
 
 .btn-primary {
@@ -452,8 +451,9 @@
 .text-warning {
   color: var(--danger-color);
   font-size: 0.875rem;
-  margin: 0.5rem 0;
+  margin: 1rem 0;
   font-style: italic;
+  text-align: center;
 }
 
 /* Notification Styles */
@@ -506,7 +506,7 @@
 /* Responsive */
 @media (max-width: 768px) {
   .playlists-grid {
-    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
     gap: 1rem;
   }
 
@@ -522,6 +522,28 @@
 
   .modal-content {
     width: 95%;
-    margin: 1rem;
+    margin: 0;
+  }
+
+  .playlist-info h3 {
+    font-size: 0.875rem;
+  }
+
+  .playlist-info .playlist-description {
+    font-size: 0.8rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .playlists-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .no-playlists {
+    padding: 2rem 1rem;
+  }
+
+  .no-playlists-content h2 {
+    font-size: 1.5rem;
   }
 }

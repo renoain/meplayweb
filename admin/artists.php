@@ -398,7 +398,7 @@ function resizeImage($file_path, $max_width, $max_height) {
 </head>
 <body>
     <div class="admin-container">
-        <!-- Sidebar -->
+        
         <?php include 'includes/sidebar.php'; ?>
 
         <!-- Main Content -->
@@ -419,10 +419,6 @@ function resizeImage($file_path, $max_width, $max_height) {
 
             <main class="admin-content">
                 <?php if (!$gd_available): ?>
-                    <div class="alert alert-warning">
-                        <i class="fas fa-exclamation-triangle"></i>
-                        <strong>Peringatan:</strong> Ekstensi GD tidak tersedia. Upload gambar tetap bekerja, tetapi tidak akan di-resize otomatis.
-                    </div>
                 <?php endif; ?>
 
                 <?php if ($message): ?>
@@ -437,7 +433,7 @@ function resizeImage($file_path, $max_width, $max_height) {
                     <div class="form-card">
                         <div class="card-header">
                             <h3>
-                                <i class="fas fa-<?php echo $edit_artist ? 'edit' : 'plus'; ?>"></i>
+                                <i class="fas fa-<?php echo $edit_artist ? 'edit' : ' '; ?>"></i>
                                 <?php echo $edit_artist ? 'Edit Artis' : 'Tambah Artis Baru'; ?>
                             </h3>
                             <?php if ($edit_artist): ?>
@@ -473,8 +469,7 @@ function resizeImage($file_path, $max_width, $max_height) {
                                         <div class="file-info">Belum ada file yang dipilih</div>
                                         <small class="form-help">Format: JPG, PNG, WEBP (maks. 5MB)</small>
                                         <?php if (!$gd_available): ?>
-                                            <small class="form-help warning">⚠️ Gambar tidak akan di-resize otomatis</small>
-                                        <?php endif; ?>
+                                         <?php endif; ?>
                                     </div>
                                     
                                     <?php if ($edit_artist && $edit_artist['profile_picture'] && $edit_artist['profile_picture'] != 'default-artist.png'): ?>
@@ -595,6 +590,6 @@ function resizeImage($file_path, $max_width, $max_height) {
     </div>
 
     <script src="assets/js/admin-main.js"></script>
-    <script src="assets/js/admin-main.js"></script>
+    <script src="assets/js/admin-artists.js"></script>
 </body>
 </html>

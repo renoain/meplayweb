@@ -1,7 +1,4 @@
-/* assets/css/album_detail.css */
-/* Sama seperti playlist_detail.css dengan beberapa penyesuaian */
-
-/* ====== BACK BUTTON ====== */
+/* BACK BUTTON */
 .back-button {
   margin-bottom: 1.5rem;
 }
@@ -26,7 +23,7 @@
   transform: translateX(-4px);
 }
 
-/* ====== PLAYLIST HEADER (digunakan untuk album) ====== */
+/*   PLAYLIST HEADER (digunakan untuk album)   */
 .playlist-header {
   display: flex;
   gap: 2rem;
@@ -83,7 +80,7 @@
   font-size: 4rem;
 }
 
-/* ====== PLAYLIST INFO (digunakan untuk album) ====== */
+/*   PLAYLIST INFO    */
 .playlist-info-large {
   flex: 1;
   display: flex;
@@ -135,7 +132,7 @@
   font-size: 0.875rem;
 }
 
-/* ====== PLAYLIST ACTIONS ====== */
+/*   PLAYLIST ACTIONS   */
 .playlist-actions {
   display: flex;
   align-items: center;
@@ -169,7 +166,7 @@
   opacity: 0.7;
 }
 
-/* ====== SONGS LIST ====== */
+/*   SONGS LIST   */
 .songs-list {
   background: var(--bg-secondary);
   border-radius: 0.75rem;
@@ -285,7 +282,7 @@
   grid-column: 3;
 }
 
-/* ====== SONG ACTIONS ====== */
+/*   SONG ACTIONS   */
 .song-actions {
   position: relative;
   flex-shrink: 0;
@@ -348,7 +345,7 @@
   color: var(--text-primary);
 }
 
-/* ====== SONG DROPDOWN ====== */
+/* SONG DROPDOWN */
 .song-dropdown {
   position: fixed;
   background-color: var(--bg-primary);
@@ -442,7 +439,7 @@
   align-items: center;
 }
 
-/* ====== NO SONGS ====== */
+/*   NO SONGS   */
 .no-songs {
   display: flex;
   align-items: center;
@@ -475,7 +472,7 @@
   margin-bottom: 2rem;
 }
 
-/* ====== MODAL STYLES ====== */
+/*   MODAL STYLES   */
 .modal {
   display: none;
   position: fixed;
@@ -616,7 +613,7 @@
   background-color: var(--bg-tertiary);
 }
 
-/* ====== RESPONSIVE ====== */
+/*   RESPONSIVE   */
 @media (max-width: 1024px) {
   .playlist-info-large h1 {
     font-size: 2.5rem;
@@ -730,5 +727,154 @@
   .song-actions {
     grid-column: 3;
     grid-row: span 2;
+  }
+}
+
+/*   DROPDOWN SYSTEM    */
+.song-dropdown {
+  position: fixed;
+  background-color: var(--bg-primary);
+  border: 1px solid var(--border-color);
+  border-radius: 0.5rem;
+  box-shadow: var(--shadow-lg);
+  min-width: 220px;
+  padding: 0.5rem 0;
+  z-index: 10000;
+  display: none;
+}
+
+.song-dropdown.show {
+  display: block;
+}
+
+.song-dropdown .dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 1rem;
+  background: none;
+  border: none;
+  width: 100%;
+  text-align: left;
+  color: var(--text-primary);
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.song-dropdown .dropdown-item:hover {
+  background-color: var(--bg-secondary);
+}
+
+/*   LIKE BUTTON STYLES  */
+.song-dropdown .dropdown-item.like-song.liked {
+  color: var(--danger-color) !important;
+}
+
+.song-dropdown .dropdown-item.like-song.liked i {
+  color: var(--danger-color) !important;
+}
+
+.song-dropdown .dropdown-item.like-song.liked:hover {
+  background-color: rgba(239, 68, 68, 0.1) !important;
+}
+
+.song-dropdown .dropdown-item.text-danger {
+  color: var(--danger-color);
+}
+
+.song-dropdown .dropdown-item.text-danger:hover {
+  background-color: rgba(239, 68, 68, 0.1);
+}
+
+/*   DROPDOWN SUBMENU   */
+.dropdown-submenu {
+  position: relative;
+}
+
+.dropdown-submenu .submenu {
+  position: absolute;
+  top: 0;
+  left: 100%;
+  background-color: var(--bg-primary);
+  border: 1px solid var(--border-color);
+  border-radius: 0.375rem;
+  box-shadow: var(--shadow-lg);
+  min-width: 200px;
+  padding: 0.5rem 0;
+  display: none;
+  z-index: 10001;
+  margin-left: 2px;
+}
+
+.dropdown-submenu:hover .submenu {
+  display: block;
+}
+
+.dropdown-submenu > .dropdown-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+/* Submenu positioning - to LEFT */
+@media (min-width: 769px) {
+  .dropdown-submenu .submenu {
+    left: auto;
+    right: 100%;
+    top: 0;
+    margin-left: 0;
+    margin-right: 2px;
+  }
+
+  .dropdown-submenu > .dropdown-item i.fa-chevron-right {
+    transform: rotate(180deg);
+  }
+}
+
+/* Responsive dropdown positioning */
+@media (max-width: 768px) {
+  .song-dropdown {
+    position: fixed !important;
+    bottom: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    top: auto !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    border-radius: 1rem 1rem 0 0 !important;
+    transform: none !important;
+    animation: slideUp 0.3s ease-out;
+  }
+
+  /* Submenu adjustment   */
+  .dropdown-submenu .submenu {
+    position: relative !important;
+    left: 0 !important;
+    right: 0 !important;
+    width: 100% !important;
+    box-shadow: none !important;
+    border: none !important;
+    border-top: 1px solid var(--border-color) !important;
+    padding-left: 1rem !important;
+    animation: none !important;
+    display: block !important;
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.3s ease;
+  }
+
+  .dropdown-submenu:hover .submenu,
+  .dropdown-submenu:focus-within .submenu {
+    max-height: 200px;
+  }
+
+  @keyframes slideUp {
+    from {
+      transform: translateY(100%);
+    }
+    to {
+      transform: translateY(0);
+    }
   }
 }

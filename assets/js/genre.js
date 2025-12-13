@@ -2,7 +2,7 @@ class GenreManager {
   constructor() {
     this.genres = new Map();
     this.setupGenreNavigation();
-    console.log("🎵 Genre Manager started");
+    console.log(" Genre Manager started");
   }
 
   setupGenreNavigation() {
@@ -14,7 +14,7 @@ class GenreManager {
   addGenreSectionToHome() {
     const homeView = document.getElementById("homeView");
     if (!homeView) {
-      console.error("❌ Home view not found");
+      console.error(" Home view not found");
       return;
     }
 
@@ -38,9 +38,9 @@ class GenreManager {
     );
     if (recentlyPlayed) {
       recentlyPlayed.insertAdjacentHTML("afterend", genreSection);
-      console.log("✅ Genre section added to home");
+      console.log(" Genre section added to home");
     } else {
-      console.error("❌ Recently played section not found");
+      console.error(" Recently played section not found");
     }
 
     this.loadAndDisplayGenres();
@@ -83,13 +83,13 @@ class GenreManager {
       }
     });
 
-    console.log("🎵 Organized genres:", Array.from(this.genres.keys()));
+    console.log(" Organized genres:", Array.from(this.genres.keys()));
   }
 
   renderGenreGrid() {
     const grid = document.getElementById("genresGrid");
     if (!grid) {
-      console.error("❌ Genres grid not found");
+      console.error(" Genres grid not found");
       return;
     }
 
@@ -132,7 +132,7 @@ class GenreManager {
       .join("");
 
     this.setupGenreInteractions();
-    console.log("✅ Genre grid rendered with", genresArray.length, "genres");
+    console.log(" Genre grid rendered with", genresArray.length, "genres");
   }
 
   setupGenreInteractions() {
@@ -143,7 +143,7 @@ class GenreManager {
       card.addEventListener("click", (e) => {
         if (!e.target.closest(".play-button")) {
           const genre = card.dataset.genre;
-          console.log("🎵 Showing genre detail:", genre);
+          console.log(" Showing genre detail:", genre);
           this.showGenreDetail(genre);
         }
       });
@@ -166,11 +166,11 @@ class GenreManager {
 
     const genre = this.genres.get(genreName);
     if (!genre) {
-      console.error("❌ Genre not found:", genreName);
+      console.error(" Genre not found:", genreName);
       return;
     }
 
-    console.log("📁 Creating genre detail view for:", genreName);
+    console.log(" Creating genre detail view for:", genreName);
     // Create or update genre detail view
     this.createGenreDetailView(genre);
     window.mePlayApp.showView("genreDetail");
@@ -185,10 +185,10 @@ class GenreManager {
       detailView.id = "genreDetailView";
       detailView.innerHTML = this.getGenreDetailHTML(genre);
       document.querySelector(".content-area").appendChild(detailView);
-      console.log("✅ Created new genre detail view");
+      console.log(" Created new genre detail view");
     } else {
       detailView.innerHTML = this.getGenreDetailHTML(genre);
-      console.log("✅ Updated existing genre detail view");
+      console.log(" Updated existing genre detail view");
     }
 
     this.setupGenreDetailInteractions(genre);
@@ -307,14 +307,14 @@ class GenreManager {
     const container = document.getElementById("genreSongsGrid");
     if (container && window.mePlayApp) {
       window.mePlayApp.setupTrackInteractions(container, genre.songs, "genre");
-      console.log("✅ Setup track interactions for genre songs");
+      console.log(" Setup track interactions for genre songs");
     }
   }
 
   playGenre(genreName) {
     const genre = this.genres.get(genreName);
     if (!genre || !genre.songs.length) {
-      console.error("❌ No songs found for genre:", genreName);
+      console.error(" No songs found for genre:", genreName);
       return;
     }
 
@@ -359,7 +359,7 @@ class GenreManager {
                     </div>
                 `;
         searchTitle.insertAdjacentHTML("afterend", filterHTML);
-        console.log("✅ Genre filter added to search");
+        console.log(" Genre filter added to search");
       }
     }
   }
@@ -369,7 +369,7 @@ class GenreManager {
     const select = document.getElementById("genreFilterSelect");
 
     if (!container || !select) {
-      console.error("❌ Genre filter elements not found");
+      console.error(" Genre filter elements not found");
       return;
     }
 
@@ -382,14 +382,14 @@ class GenreManager {
       });
 
     container.style.display = "block";
-    console.log("✅ Genre filter shown with", this.genres.size, "genres");
+    console.log(" Genre filter shown with", this.genres.size, "genres");
 
     select.replaceWith(select.cloneNode(true));
     const newSelect = document.getElementById("genreFilterSelect");
 
     // Add filter functionality
     newSelect.addEventListener("change", (e) => {
-      console.log("🔍 Filtering search by genre:", e.target.value);
+      console.log(" Filtering search by genre:", e.target.value);
       this.filterSearchResults(e.target.value);
     });
   }
@@ -403,7 +403,7 @@ class GenreManager {
     if (window.searchManager) {
       window.searchManager.performSearch(currentQuery, genre);
     } else {
-      console.error("❌ Search manager not available");
+      console.error(" Search manager not available");
     }
   }
 

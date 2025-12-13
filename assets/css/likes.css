@@ -1,7 +1,3 @@
-/* ====== LIKES PAGE STYLES ====== */
-
-/* ====== RESET & BASE ====== */
-
 * {
   box-sizing: border-box;
   margin: 0;
@@ -13,7 +9,7 @@ html {
   overflow-x: hidden;
 }
 
-/* ====== PAGE HEADER ====== */
+/*  PAGE HEADER  */
 .page-header {
   display: flex;
   justify-content: space-between;
@@ -60,7 +56,7 @@ html {
   font-size: 1rem;
 }
 
-/* ====== HEADER ACTIONS ====== */
+/*  HEADER ACTIONS  */
 .header-actions {
   margin-bottom: 1rem;
 }
@@ -85,7 +81,7 @@ html {
   transform: scale(1.05);
 }
 
-/* ====== SONGS LIST ====== */
+/*  SONGS LIST  */
 .songs-list {
   background: var(--bg-secondary);
   border-radius: 0.75rem;
@@ -116,7 +112,7 @@ html {
   border-bottom: none;
 }
 
-/* ====== SONG COVER ====== */
+/*  SONG COVER  */
 .song-cover {
   width: 3rem;
   height: 3rem;
@@ -155,7 +151,7 @@ html {
   opacity: 1;
 }
 
-/* ====== SONG INFO ====== */
+/*  SONG INFO  */
 .song-info {
   min-width: 0;
   overflow: hidden;
@@ -181,7 +177,7 @@ html {
   text-overflow: ellipsis;
 }
 
-/* ====== SONG DURATION ====== */
+/*  SONG DURATION  */
 .song-duration {
   color: var(--text-secondary);
   font-size: 0.875rem;
@@ -189,7 +185,7 @@ html {
   grid-column: 3;
 }
 
-/* ====== SONG ACTIONS ====== */
+/*  SONG ACTIONS  */
 .song-actions {
   position: relative;
   flex-shrink: 0;
@@ -219,7 +215,7 @@ html {
   color: var(--text-primary);
 }
 
-/* ====== SONG DROPDOWN ====== */
+/*  DROPDOWN SYSTEM   */
 .song-dropdown {
   position: fixed;
   background-color: var(--bg-primary);
@@ -228,7 +224,7 @@ html {
   box-shadow: var(--shadow-lg);
   min-width: 220px;
   padding: 0.5rem 0;
-  z-index: 1000;
+  z-index: 10000;
   display: none;
 }
 
@@ -255,7 +251,7 @@ html {
   background-color: var(--bg-secondary);
 }
 
-/* ====== LIKE BUTTON STYLES - WARNA MERAH ====== */
+/*  LIKE BUTTON STYLES   */
 .song-dropdown .dropdown-item.like-song.liked {
   color: var(--danger-color) !important;
 }
@@ -276,7 +272,7 @@ html {
   background-color: rgba(239, 68, 68, 0.1);
 }
 
-/* ====== DROPDOWN SUBMENU ====== */
+/*  DROPDOWN SUBMENU  */
 .dropdown-submenu {
   position: relative;
 }
@@ -292,7 +288,7 @@ html {
   min-width: 200px;
   padding: 0.5rem 0;
   display: none;
-  z-index: 1001;
+  z-index: 10001;
   margin-left: 2px;
 }
 
@@ -306,7 +302,22 @@ html {
   align-items: center;
 }
 
-/* ====== NO SONGS STATE ====== */
+/* Submenu positioning - to LEFT on desktop */
+@media (min-width: 769px) {
+  .dropdown-submenu .submenu {
+    left: auto;
+    right: 100%;
+    top: 0;
+    margin-left: 0;
+    margin-right: 2px;
+  }
+
+  .dropdown-submenu > .dropdown-item i.fa-chevron-right {
+    transform: rotate(180deg);
+  }
+}
+
+/*  NO SONGS STATE  */
 .no-songs {
   display: flex;
   align-items: center;
@@ -339,7 +350,16 @@ html {
   margin-bottom: 2rem;
 }
 
-/* ====== MODAL STYLES ====== */
+.no-songs-content .btn-primary {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  border-radius: 2rem;
+  text-decoration: none;
+}
+
+/*  MODAL STYLES  */
 .modal {
   display: none;
   position: fixed;
@@ -403,7 +423,7 @@ html {
   padding: 1.5rem;
 }
 
-/* ====== FORM STYLES ====== */
+/*  FORM STYLES  */
 .form-group {
   margin-bottom: 1.5rem;
 }
@@ -441,7 +461,7 @@ html {
   font-family: inherit;
 }
 
-/* ====== BUTTON STYLES ====== */
+/*  BUTTON STYLES  */
 .btn-primary,
 .btn-secondary {
   padding: 0.75rem 1.5rem;
@@ -476,7 +496,7 @@ html {
   background-color: var(--bg-tertiary);
 }
 
-/* ====== FORM ACTIONS ====== */
+/*  FORM ACTIONS  */
 .form-actions {
   display: flex;
   gap: 1rem;
@@ -484,30 +504,34 @@ html {
   margin-top: 2rem;
 }
 
-/* ====== NOTIFICATION STYLES ====== */
+/*  NOTIFICATION STYLES  */
 .notification {
-  position: relative;
+  position: fixed;
+  top: 1rem;
+  right: 1rem;
   padding: 0.75rem 1rem;
   border-radius: 0.5rem;
-  margin-bottom: 1rem;
-  display: none;
+  z-index: 10001;
   animation: slideIn 0.3s ease-out;
+  background-color: var(--bg-primary);
+  border: 1px solid var(--border-color);
+  box-shadow: var(--shadow-lg);
+  transform: translateX(100%);
+  opacity: 0;
+  transition: all 0.3s ease;
 }
 
 .notification.show {
-  display: block;
+  transform: translateX(0);
+  opacity: 1;
 }
 
 .notification-success {
-  background-color: rgba(34, 197, 94, 0.1);
-  border: 1px solid rgba(34, 197, 94, 0.2);
-  color: #16a34a;
+  border-left: 4px solid var(--success-color);
 }
 
 .notification-error {
-  background-color: rgba(239, 68, 68, 0.1);
-  border: 1px solid rgba(239, 68, 68, 0.2);
-  color: #dc2626;
+  border-left: 4px solid var(--danger-color);
 }
 
 .notification-content {
@@ -518,6 +542,14 @@ html {
 
 .notification-content i {
   font-size: 1.25rem;
+}
+
+.notification-success .notification-content i {
+  color: var(--success-color);
+}
+
+.notification-error .notification-content i {
+  color: var(--danger-color);
 }
 
 @keyframes slideIn {
@@ -531,7 +563,7 @@ html {
   }
 }
 
-/* ====== RESPONSIVE STYLES ====== */
+/*  RESPONSIVE STYLES  */
 @media (max-width: 1024px) {
   .header-info h1 {
     font-size: 2.5rem;
@@ -552,14 +584,18 @@ html {
 
   .header-content {
     flex-direction: column;
-    align-items: flex-start;
+    align-items: center;
+    text-align: center;
     gap: 1rem;
   }
 
   .header-icon {
-    width: 200px;
-    height: 200px;
-    margin: 0 auto;
+    width: 120px;
+    height: 120px;
+  }
+
+  .header-icon i {
+    font-size: 3rem;
   }
 
   .header-info h1 {
@@ -585,6 +621,8 @@ html {
   }
 
   .song-item {
+    grid-template-columns: auto 1fr auto;
+    grid-template-rows: auto auto;
     padding: 0.75rem 1rem;
     gap: 0.5rem;
   }
@@ -592,50 +630,6 @@ html {
   .song-cover {
     width: 2.5rem;
     height: 2.5rem;
-  }
-
-  /* Mobile dropdown styles */
-  .song-dropdown {
-    position: fixed !important;
-    bottom: 0 !important;
-    left: 0 !important;
-    right: 0 !important;
-    top: auto !important;
-    width: 100% !important;
-    max-width: 100% !important;
-    border-radius: 1rem 1rem 0 0 !important;
-    transform: none !important;
-    animation: slideUp 0.3s ease-out;
-  }
-
-  @keyframes slideUp {
-    from {
-      transform: translateY(100%);
-    }
-    to {
-      transform: translateY(0);
-    }
-  }
-}
-
-@media (max-width: 480px) {
-  .header-icon {
-    width: 150px;
-    height: 150px;
-  }
-
-  .header-info h1 {
-    font-size: 1.5rem;
-  }
-
-  .song-item {
-    grid-template-columns: auto 1fr auto;
-    grid-template-rows: auto auto;
-  }
-
-  .song-cover {
-    width: 2rem;
-    height: 2rem;
     grid-row: span 2;
   }
 
@@ -656,11 +650,72 @@ html {
     grid-row: span 2;
   }
 
+  /* Mobile dropdown styles */
   .song-dropdown {
-    min-width: 180px;
+    position: fixed !important;
+    bottom: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    top: auto !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    border-radius: 1rem 1rem 0 0 !important;
+    transform: none !important;
+    animation: slideUp 0.3s ease-out;
   }
 
+  /* Submenu adjustment     */
   .dropdown-submenu .submenu {
-    display: none !important;
+    position: relative !important;
+    left: 0 !important;
+    right: 0 !important;
+    width: 100% !important;
+    box-shadow: none !important;
+    border: none !important;
+    border-top: 1px solid var(--border-color) !important;
+    padding-left: 1rem !important;
+    animation: none !important;
+    display: block !important;
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.3s ease;
+  }
+
+  .dropdown-submenu:hover .submenu,
+  .dropdown-submenu:focus-within .submenu {
+    max-height: 200px;
+  }
+
+  @keyframes slideUp {
+    from {
+      transform: translateY(100%);
+    }
+    to {
+      transform: translateY(0);
+    }
+  }
+}
+
+@media (max-width: 480px) {
+  .header-icon {
+    width: 100px;
+    height: 100px;
+  }
+
+  .header-info h1 {
+    font-size: 1.5rem;
+  }
+
+  .song-item {
+    padding: 0.625rem;
+  }
+
+  .song-cover {
+    width: 2rem;
+    height: 2rem;
+  }
+
+  .song-dropdown {
+    min-width: 180px;
   }
 }

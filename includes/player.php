@@ -1,3 +1,7 @@
+<?php
+// File: includes/player.php
+// Ini adalah komponen player yang akan diinclude di setiap halaman
+?>
 <div class="music-player" id="musicPlayer">
     <audio id="audioElement" preload="metadata"></audio>
     
@@ -84,3 +88,6 @@
         </div>
     </div>
 </div>
+
+<!-- Notification System -->
+<div id="notificationContainer" style="position: fixed; top: 20px; right: 20px; z-index: 9999;"></div>

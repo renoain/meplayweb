@@ -1,4 +1,3 @@
-// Artists specific JavaScript
 document.addEventListener("DOMContentLoaded", function () {
   initializeArtistsForm();
   initializeArtistsUpload();

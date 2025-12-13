@@ -1,0 +1,21 @@
+# .htaccess - SPA URL Rewriting
+RewriteEngine On
+
+# Redirect API requests
+RewriteRule ^api/(.*)$ api/$1 [L]
+
+# Redirect assets
+RewriteRule ^assets/(.*)$ assets/$1 [L]
+RewriteRule ^uploads/(.*)$ uploads/$1 [L]
+
+# Redirect to login if not authenticated
+RewriteCond %{REQUEST_URI} !^/login\.php
+RewriteCond %{REQUEST_URI} !^/register\.php
+RewriteCond %{REQUEST_URI} !^/api/
+RewriteCond %{HTTP_COOKIE} !PHPSESSID=[^;]+
+RewriteRule ^(.*)$ login.php [L]
+
+# SPA Routing - all other requests go to index.php
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^(.*)$ index.php [L,QSA]

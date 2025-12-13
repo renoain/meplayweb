@@ -65,13 +65,13 @@ if (isset($_SESSION['user_id'])) {
             <li class="nav-item <?php echo $current_page == 'index.php' ? 'active' : ''; ?>">
                 <a href="index.php" class="nav-link">
                     <i class="fas fa-home"></i>
-                    <span>Beranda</span>
+                    <span>Home</span>
                 </a>
             </li>
-            <li class="nav-item <?php echo $current_page == 'search.php' ? 'active' : ''; ?>">
-                <a href="search.php" class="nav-link">
+            <li class="nav-item <?php echo $current_page == 'browse.php' ? 'active' : ''; ?>">
+                <a href="browse.php" class="nav-link">
                     <i class="fas fa-search"></i>
-                    <span>Cari</span>
+                    <span>Browse</span>
                 </a>
             </li>
         </ul>
@@ -105,22 +105,7 @@ if (isset($_SESSION['user_id'])) {
         </div>
     </nav>
     
-    <div class="sidebar-footer">
-        <a href="settings.php" class="nav-link">
-            <i class="fas fa-cog"></i>
-            <span>Pengaturan</span>
-        </a>
-        <?php if (isset($_SESSION['role']) && $_SESSION['role'] === 'admin'): ?>
-        <a href="admin/dashboard.php" class="nav-link">
-            <i class="fas fa-shield-alt"></i>
-            <span>Admin Panel</span>
-        </a>
-        <?php endif; ?>
-        <a href="logout.php" class="nav-link">
-            <i class="fas fa-sign-out-alt"></i>
-            <span>Logout</span>
-        </a>
-    </div>
+  
 </div>
 
 <div class="sidebar-overlay" id="sidebarOverlay"></div>

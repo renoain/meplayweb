@@ -1,4 +1,3 @@
-// Searchable dropdown functionality
 document.addEventListener("DOMContentLoaded", function () {
   initializeSearchableDropdowns();
   initializeFileUploads();

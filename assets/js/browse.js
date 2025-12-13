@@ -1,8 +1,7 @@
-// assets/js/search.js
 document.addEventListener("DOMContentLoaded", function () {
   console.log("Search page loaded");
 
-  // ====== NOTIFICATION SYSTEM ======
+  //  NOTIFICATION SYSTEM
   function showNotification(message, type = "success") {
     // Remove any existing notifications
     document.querySelectorAll(".notification.show").forEach((notification) => {
@@ -31,7 +30,7 @@ document.addEventListener("DOMContentLoaded", function () {
     }, 3000);
   }
 
-  // ====== DROPDOWN SYSTEM ======
+  //  DROPDOWN SYSTEM
   let activeDropdown = null;
 
   function closeDropdowns() {
@@ -51,7 +50,7 @@ document.addEventListener("DOMContentLoaded", function () {
     if (e.key === "Escape") closeDropdowns();
   });
 
-  // ====== SONG DROPDOWNS ======
+  //  SONG DROPDOWNS
   document.querySelectorAll(".song-more-btn").forEach((button) => {
     button.addEventListener("click", function (e) {
       e.stopPropagation();
@@ -78,7 +77,7 @@ document.addEventListener("DOMContentLoaded", function () {
     });
   });
 
-  // ====== LIKE SONG ======
+  //  LIKE SONG
   document.querySelectorAll(".like-song").forEach((button) => {
     button.addEventListener("click", function (e) {
       e.preventDefault();
@@ -149,7 +148,7 @@ document.addEventListener("DOMContentLoaded", function () {
     });
   });
 
-  // ====== LIKE BUTTON CLICKS ======
+  //  LIKE BUTTON CLICKS
   document.querySelectorAll(".like-btn").forEach((button) => {
     button.addEventListener("click", async function (e) {
       e.preventDefault();
@@ -216,7 +215,7 @@ document.addEventListener("DOMContentLoaded", function () {
     });
   });
 
-  // ====== PLAY BUTTONS ======
+  //  PLAY BUTTONS
   document.querySelectorAll(".play-btn").forEach((btn) => {
     btn.addEventListener("click", async function (e) {
       e.stopPropagation();
@@ -260,7 +259,7 @@ document.addEventListener("DOMContentLoaded", function () {
     });
   });
 
-  // ====== ADD TO QUEUE ======
+  //  ADD TO QUEUE
   document.querySelectorAll(".add-to-queue").forEach((button) => {
     button.addEventListener("click", function (e) {
       e.preventDefault();
@@ -306,7 +305,7 @@ document.addEventListener("DOMContentLoaded", function () {
     });
   });
 
-  // ====== ADD TO PLAYLIST ======
+  //  ADD TO PLAYLIST
   document
     .querySelectorAll(".add-to-playlist:not(.disabled)")
     .forEach((button) => {
@@ -353,7 +352,7 @@ document.addEventListener("DOMContentLoaded", function () {
       });
     });
 
-  // ====== CREATE PLAYLIST ======
+  //  CREATE PLAYLIST
   document.querySelectorAll(".create-playlist").forEach((button) => {
     button.addEventListener("click", function (e) {
       e.preventDefault();
@@ -369,7 +368,7 @@ document.addEventListener("DOMContentLoaded", function () {
     });
   });
 
-  // ====== MODAL FUNCTIONS ======
+  //  MODAL FUNCTIONS
   document.querySelectorAll(".close-modal").forEach((btn) => {
     btn.addEventListener("click", function () {
       document.querySelectorAll(".modal").forEach((modal) => {
@@ -378,7 +377,7 @@ document.addEventListener("DOMContentLoaded", function () {
     });
   });
 
-  // ====== CREATE PLAYLIST FORM ======
+  //  CREATE PLAYLIST FORM
   const createForm = document.getElementById("createPlaylistForm");
   if (createForm) {
     createForm.addEventListener("submit", function (e) {

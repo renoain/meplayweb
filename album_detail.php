@@ -1,6 +1,5 @@
 <?php
-// album_detail.php - Halaman detail album
-require_once 'config/constants.php';
+ require_once 'config/constants.php';
 require_once 'config/auth.php';
 require_once 'config/functions.php';
 
@@ -81,6 +80,8 @@ foreach ($songs as $song) {
     <link rel="stylesheet" href="assets/css/album_detail.css">
     <link rel="stylesheet" href="assets/css/sidebar.css">
     <link rel="stylesheet" href="assets/css/player.css">
+    <link rel="stylesheet" href="assets/css/header-search.css">
+
 </head>
 <body data-theme="<?php echo getCurrentTheme(); ?>">
     <?php include 'includes/sidebar.php'; ?>
@@ -279,5 +280,7 @@ foreach ($songs as $song) {
     <script src="assets/js/player.js"></script>
     <script src="assets/js/likes.js"></script>
     <script src="assets/js/album_detail.js"></script>
+    <script src="assets/js/header-search.js"></script>
+
 </body>
 </html>

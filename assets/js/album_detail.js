@@ -1,11 +1,504 @@
-// assets/js/album_detail.js
-document.addEventListener("DOMContentLoaded", function () {
-  console.log("Album detail page loaded");
+class AlbumDetailManager {
+  constructor() {
+    this.isInitialized = false;
+    this.activeDropdown = null;
+    this.activeSubmenu = null;
+    this.init();
+  }
 
-  // ====== NOTIFICATION SYSTEM ======
-  function showNotification(message, type = "success") {
+  init() {
+    if (this.isInitialized) return;
+
+    console.log(" AlbumDetailManager initialized");
+    this.setupEventListeners();
+    this.isInitialized = true;
+  }
+
+  setupEventListeners() {
+    // More buttons untuk dropdown
+    document.querySelectorAll(".more-btn").forEach((button) => {
+      button.addEventListener("click", (e) => {
+        e.stopPropagation();
+        this.toggleSongDropdown(button);
+      });
+    });
+
+    // Close dropdowns when clicking outside
+    document.addEventListener("click", (e) => {
+      if (
+        !e.target.closest(".more-btn") &&
+        !e.target.closest(".song-dropdown")
+      ) {
+        this.closeDropdowns();
+      }
+    });
+
+    // Escape key to close dropdowns
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape") this.closeDropdowns();
+    });
+
+    // Like buttons in dropdown
+    document.querySelectorAll(".song-dropdown .like-song").forEach((button) => {
+      button.addEventListener("click", (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        this.handleLikeButton(button);
+      });
+    });
+
+    // Add to queue buttons
+    document
+      .querySelectorAll(".song-dropdown .add-to-queue")
+      .forEach((button) => {
+        button.addEventListener("click", (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          this.handleAddToQueue(button);
+        });
+      });
+
+    // Submenu triggers
+    document.querySelectorAll(".submenu-trigger").forEach((button) => {
+      button.addEventListener("click", (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        this.toggleSubmenu(button);
+      });
+    });
+
+    // Add to playlist buttons in submenu
+    document
+      .querySelectorAll(".submenu .add-to-playlist:not(.disabled)")
+      .forEach((button) => {
+        button.addEventListener("click", (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          this.handleAddToPlaylist(button);
+        });
+      });
+
+    // Create playlist buttons
+    document.querySelectorAll(".create-playlist").forEach((button) => {
+      button.addEventListener("click", (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        this.handleCreatePlaylist(button);
+      });
+    });
+
+    // Play buttons on song covers
+    document.querySelectorAll(".song-cover .play-btn").forEach((button) => {
+      button.addEventListener("click", (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        this.handlePlayButton(button);
+      });
+    });
+
+    // Play Album button
+    const playAlbumBtn = document.getElementById("playAlbumBtn");
+    if (playAlbumBtn) {
+      playAlbumBtn.addEventListener("click", () => {
+        this.handlePlayAll();
+      });
+    }
+
+    // Modal close buttons
+    document.querySelectorAll(".close-modal").forEach((button) => {
+      button.addEventListener("click", () => {
+        this.closeModals();
+      });
+    });
+
+    // Create playlist form
+    const createForm = document.getElementById("createPlaylistForm");
+    if (createForm) {
+      createForm.addEventListener("submit", (e) => {
+        e.preventDefault();
+        this.handleCreatePlaylistForm();
+      });
+    }
+  }
+
+  toggleSongDropdown(button) {
+    const songId = button.getAttribute("data-song-id");
+    let dropdown;
+
+    if (songId) {
+      dropdown = document.getElementById(`dropdown-${songId}`);
+    }
+
+    if (!dropdown) {
+      dropdown =
+        button.closest(".song-actions")?.querySelector(".song-dropdown") ||
+        button.nextElementSibling;
+    }
+
+    if (!dropdown || !dropdown.classList.contains("song-dropdown")) return;
+
+    if (
+      this.activeDropdown === dropdown &&
+      dropdown.style.display === "block"
+    ) {
+      dropdown.style.display = "none";
+      dropdown.classList.remove("show");
+      this.activeDropdown = null;
+      this.closeSubmenu();
+    } else {
+      this.closeDropdowns();
+
+      // Position dropdown to the LEFT
+      const rect = button.getBoundingClientRect();
+      dropdown.style.display = "block";
+      dropdown.classList.add("show");
+      dropdown.style.position = "fixed";
+      dropdown.style.zIndex = "10000";
+
+      // Calculate position - align to LEFT side of button
+      dropdown.style.top = `${rect.bottom + 5}px`;
+
+      // Position to the LEFT of the button
+      const dropdownWidth = dropdown.offsetWidth;
+      let leftPosition = rect.left - dropdownWidth;
+
+      // If dropdown would go off screen on left, align to right instead
+      if (leftPosition < 10) {
+        leftPosition = rect.right + 5;
+      }
+
+      dropdown.style.left = `${leftPosition}px`;
+
+      this.activeDropdown = dropdown;
+      this.closeSubmenu();
+    }
+  }
+
+  toggleSubmenu(button) {
+    const submenu = button
+      .closest(".dropdown-submenu")
+      ?.querySelector(".submenu");
+    if (!submenu) return;
+
+    if (this.activeSubmenu === submenu) {
+      this.closeSubmenu();
+    } else {
+      this.closeSubmenu();
+      this.activeSubmenu = submenu;
+
+      // Position submenu to the LEFT on desktop
+      if (window.innerWidth > 768) {
+        const rect = button.getBoundingClientRect();
+        submenu.style.display = "block";
+        submenu.style.position = "fixed";
+        submenu.style.zIndex = "10001";
+        submenu.style.top = `${rect.top}px`;
+        submenu.style.right = `${window.innerWidth - rect.left + 5}px`;
+      } else {
+        // On mobile, just show it
+        submenu.style.display = "block";
+        submenu.style.maxHeight = "200px";
+      }
+    }
+  }
+
+  closeSubmenu() {
+    if (this.activeSubmenu) {
+      this.activeSubmenu.style.display = "none";
+      this.activeSubmenu.style.maxHeight = "0";
+      this.activeSubmenu = null;
+    }
+  }
+
+  closeDropdowns() {
+    if (this.activeDropdown) {
+      this.activeDropdown.style.display = "none";
+      this.activeDropdown.classList.remove("show");
+      this.activeDropdown = null;
+    }
+    this.closeSubmenu();
+  }
+
+  closeModals() {
+    document.querySelectorAll(".modal").forEach((modal) => {
+      modal.classList.remove("show");
+    });
+    document.body.style.overflow = "";
+  }
+
+  async handleLikeButton(button) {
+    const songId = button.getAttribute("data-song-id");
+    if (!songId) return;
+
+    await this.toggleLike(songId, button);
+    this.closeDropdowns();
+  }
+
+  async toggleLike(songId, button) {
+    const isLiked = button.classList.contains("liked");
+    const action = isLiked ? "unlike" : "like";
+
+    try {
+      const response = await fetch("api/likes.php", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          song_id: parseInt(songId),
+          action: action,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        this.updateLikeButtons(songId, !isLiked);
+        this.showNotification(
+          isLiked ? "Removed from liked songs" : "Added to liked songs",
+          "success"
+        );
+      } else {
+        this.showNotification(data.message || "Error updating like", "error");
+      }
+    } catch (error) {
+      console.error("Error:", error);
+      this.showNotification("Error updating like", "error");
+    }
+  }
+
+  updateLikeButtons(songId, isLiked) {
+    // Update like buttons in dropdown
+    document
+      .querySelectorAll(`.like-song[data-song-id="${songId}"]`)
+      .forEach((button) => {
+        this.updateLikeButton(button, isLiked);
+      });
+
+    // Update player like button if this song is playing
+    if (
+      window.musicPlayer &&
+      window.musicPlayer.currentSong &&
+      window.musicPlayer.currentSong.id == songId
+    ) {
+      this.updatePlayerLikeButton(isLiked);
+    }
+  }
+
+  updateLikeButton(button, isLiked) {
+    if (isLiked) {
+      button.innerHTML = '<i class="fas fa-heart"></i> Unlike';
+      button.classList.add("liked");
+    } else {
+      button.innerHTML = '<i class="far fa-heart"></i> Like';
+      button.classList.remove("liked");
+    }
+  }
+
+  updatePlayerLikeButton(isLiked) {
+    const playerLikeBtn = document.getElementById("nowPlayingLike");
+    if (playerLikeBtn) {
+      if (isLiked) {
+        playerLikeBtn.innerHTML = '<i class="fas fa-heart"></i>';
+        playerLikeBtn.classList.add("liked");
+      } else {
+        playerLikeBtn.innerHTML = '<i class="far fa-heart"></i>';
+        playerLikeBtn.classList.remove("liked");
+      }
+    }
+  }
+
+  async handleAddToQueue(button) {
+    const songId = button.getAttribute("data-song-id");
+    const songItem = button.closest(".song-item");
+    const songTitle = songItem
+      ? songItem.querySelector(".song-info h4").textContent
+      : "Song";
+
+    try {
+      const response = await fetch(`api/songs.php?id=${songId}`);
+      const data = await response.json();
+
+      if (data.success && window.musicPlayer) {
+        window.musicPlayer.addToQueue(data.song);
+        this.showNotification(`"${songTitle}" added to queue`);
+      }
+    } catch (error) {
+      console.error("Error adding to queue:", error);
+      this.showNotification("Error adding to queue", "error");
+    }
+    this.closeDropdowns();
+  }
+
+  async handleAddToPlaylist(button) {
+    const songId = button.getAttribute("data-song-id");
+    const playlistId = button.getAttribute("data-playlist-id");
+    const playlistName = button.textContent.trim();
+    const songItem = button.closest(".song-item");
+    const songTitle = songItem
+      ? songItem.querySelector(".song-info h4").textContent
+      : "Song";
+
+    try {
+      const response = await fetch("api/playlists.php", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          action: "add_song",
+          playlist_id: parseInt(playlistId),
+          song_id: parseInt(songId),
+        }),
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        this.showNotification(`"${songTitle}" added to "${playlistName}"`);
+      } else {
+        this.showNotification(
+          data.message || "Error adding to playlist",
+          "error"
+        );
+      }
+    } catch (error) {
+      console.error("Add to playlist error:", error);
+      this.showNotification("Error adding to playlist", "error");
+    }
+    this.closeSubmenu();
+  }
+
+  handleCreatePlaylist(button) {
+    const songId = button.getAttribute("data-song-id");
+    const modal = document.getElementById("createPlaylistModal");
+    const songIdInput = document.getElementById("songIdForPlaylist");
+
+    if (modal && songIdInput) {
+      songIdInput.value = songId;
+      modal.classList.add("show");
+      document.body.style.overflow = "hidden";
+    }
+    this.closeDropdowns();
+  }
+
+  async handlePlayButton(button) {
+    const songId = button.getAttribute("data-song-id");
+    const songItem = button.closest(".song-item");
+    const songTitle = songItem
+      ? songItem.querySelector(".song-info h4").textContent
+      : "Song";
+
+    try {
+      const response = await fetch(`api/songs.php?id=${songId}`);
+      const data = await response.json();
+
+      if (data.success && window.musicPlayer) {
+        window.musicPlayer.playSong(data.song);
+        this.showNotification(`Playing "${songTitle}"`);
+      }
+    } catch (error) {
+      console.error("Error playing song:", error);
+      this.showNotification("Error playing song", "error");
+    }
+  }
+
+  async handlePlayAll() {
+    const songItems = document.querySelectorAll(".song-item");
+    const songIds = [];
+    const songTitles = [];
+
+    songItems.forEach((item) => {
+      const songId = item.getAttribute("data-song-id");
+      const songTitle = item.querySelector(".song-info h4").textContent;
+      if (songId) {
+        songIds.push(parseInt(songId));
+        songTitles.push(songTitle);
+      }
+    });
+
+    if (songIds.length === 0) {
+      this.showNotification("No songs in album", "error");
+      return;
+    }
+
+    try {
+      // Fetch first song data to play immediately
+      const firstSongResponse = await fetch(`api/songs.php?id=${songIds[0]}`);
+      const firstSongData = await firstSongResponse.json();
+
+      if (firstSongData.success && window.musicPlayer) {
+        // Clear queue and play first song
+        window.musicPlayer.clearQueue();
+        window.musicPlayer.playSong(firstSongData.song);
+
+        // Add remaining songs to queue
+        for (let i = 1; i < songIds.length; i++) {
+          try {
+            const songResponse = await fetch(`api/songs.php?id=${songIds[i]}`);
+            const songData = await songResponse.json();
+            if (songData.success) {
+              window.musicPlayer.addToQueue(songData.song);
+            }
+          } catch (error) {
+            console.error("Error adding song to queue:", error);
+          }
+        }
+
+        this.showNotification(`Playing ${songIds.length} songs from album`);
+      }
+    } catch (error) {
+      console.error("Error playing all songs:", error);
+      this.showNotification("Error playing songs", "error");
+    }
+  }
+
+  async handleCreatePlaylistForm() {
+    const form = document.getElementById("createPlaylistForm");
+    const formData = new FormData(form);
+    const songId = document.getElementById("songIdForPlaylist").value;
+    const title = formData.get("title");
+
+    if (!title.trim()) {
+      this.showNotification("Please enter a playlist title", "error");
+      return;
+    }
+
+    try {
+      const response = await fetch("api/playlists.php", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          action: "create",
+          title: title,
+          description: formData.get("description"),
+          song_id: songId ? parseInt(songId) : null,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        this.showNotification(`Playlist "${title}" created successfully`);
+        this.closeModals();
+        form.reset();
+      } else {
+        this.showNotification(
+          data.message || "Error creating playlist",
+          "error"
+        );
+      }
+    } catch (error) {
+      console.error("Create playlist error:", error);
+      this.showNotification("Error creating playlist", "error");
+    }
+  }
+
+  showNotification(message, type = "success") {
     // Remove any existing notifications
-    document.querySelectorAll(".notification.show").forEach((notification) => {
+    document.querySelectorAll(".notification").forEach((notification) => {
       notification.remove();
     });
 
@@ -13,13 +506,11 @@ document.addEventListener("DOMContentLoaded", function () {
     const notification = document.createElement("div");
     notification.className = `notification notification-${type}`;
     notification.innerHTML = `
-            <div class="notification-content">
-                <i class="fas fa-${
-                  type === "success" ? "check" : "exclamation"
-                }"></i>
-                <span>${message}</span>
-            </div>
-        `;
+      <div class="notification-content">
+        <i class="fas fa-${type === "success" ? "check" : "exclamation"}"></i>
+        <span>${message}</span>
+      </div>
+    `;
 
     document.body.appendChild(notification);
 
@@ -30,546 +521,9 @@ document.addEventListener("DOMContentLoaded", function () {
       setTimeout(() => notification.remove(), 300);
     }, 3000);
   }
-
-  // ====== PLAY ALL FUNCTIONALITY ======
-  const playAllBtn = document.getElementById("playAlbumBtn");
-  if (playAllBtn) {
-    playAllBtn.addEventListener("click", async function () {
-      const albumName = document.querySelector(
-        ".playlist-info-large h1"
-      ).textContent;
-
-      // Collect all song IDs from the page
-      const songIds = [];
-      document.querySelectorAll(".song-item").forEach((item) => {
-        const songId = item.getAttribute("data-song-id");
-        if (songId) {
-          songIds.push(parseInt(songId));
-        }
-      });
-
-      if (songIds.length === 0) {
-        showNotification("No songs in album", "error");
-        return;
-      }
-
-      try {
-        // Fetch first song data to play immediately
-        const firstSongResponse = await fetch(`api/songs.php?id=${songIds[0]}`);
-        const firstSongData = await firstSongResponse.json();
-
-        if (!firstSongData.success) {
-          showNotification("Failed to load song data", "error");
-          return;
-        }
-
-        // Clear existing queue
-        if (window.musicPlayer) {
-          window.musicPlayer.clearQueue();
-
-          // Play first song immediately
-          window.musicPlayer.playSong(firstSongData.song, 0, true);
-
-          // Add remaining songs to queue
-          for (let i = 1; i < songIds.length; i++) {
-            try {
-              const songResponse = await fetch(
-                `api/songs.php?id=${songIds[i]}`
-              );
-              const songData = await songResponse.json();
-
-              if (songData.success) {
-                window.musicPlayer.addToQueue(songData.song);
-              }
-            } catch (error) {
-              console.error("Error fetching song:", error);
-            }
-          }
-
-          // Set album info for reference
-          window.musicPlayer.currentAlbum = {
-            name: albumName,
-            songIds: songIds,
-          };
-
-          showNotification(
-            `Playing ${songIds.length} songs from "${albumName}"`
-          );
-
-          // Auto-play first song
-          setTimeout(() => {
-            if (window.musicPlayer.audio) {
-              window.musicPlayer.play();
-            }
-          }, 500);
-        } else {
-          // Fallback: Save to localStorage
-          const songsData = [];
-
-          // Try to get all songs data
-          for (let i = 0; i < Math.min(songIds.length, 10); i++) {
-            // Limit to 10 songs for performance
-            try {
-              const songResponse = await fetch(
-                `api/songs.php?id=${songIds[i]}`
-              );
-              const songData = await songResponse.json();
-
-              if (songData.success) {
-                songsData.push(songData.song);
-              }
-            } catch (error) {
-              console.error("Error fetching song:", error);
-            }
-          }
-
-          if (songsData.length > 0) {
-            localStorage.setItem("meplay_queue", JSON.stringify(songIds));
-            localStorage.setItem(
-              "meplay_current_album",
-              JSON.stringify({
-                ids: songIds,
-                songs: songsData,
-                name: albumName,
-              })
-            );
-
-            // Set first song as now playing
-            localStorage.setItem(
-              "meplay_now_playing",
-              JSON.stringify(songsData[0])
-            );
-
-            showNotification(
-              `Added ${songIds.length} songs from "${albumName}" to queue`
-            );
-
-            // Reload page to trigger player update
-            setTimeout(() => {
-              window.location.reload();
-            }, 1000);
-          }
-        }
-      } catch (error) {
-        console.error("Error playing album:", error);
-        showNotification("Failed to play album", "error");
-      }
-    });
-  }
-
-  // ====== INDIVIDUAL PLAY BUTTONS ======
-  document.querySelectorAll(".play-btn").forEach((btn) => {
-    btn.addEventListener("click", async function (e) {
-      e.stopPropagation();
-
-      const songId = this.getAttribute("data-song-id");
-      const songItem = this.closest(".song-item");
-      const songTitle = songItem
-        ? songItem.querySelector(".song-info h4").textContent
-        : "Song";
-
-      try {
-        // Get song data
-        const response = await fetch(`api/songs.php?id=${songId}`);
-        const data = await response.json();
-
-        if (data.success) {
-          if (window.musicPlayer) {
-            // Clear queue and add this song
-            window.musicPlayer.clearQueue();
-            window.musicPlayer.playSong(data.song, 0, true);
-
-            // Get all other songs in album
-            const allSongIds = [];
-            document.querySelectorAll(".song-item").forEach((item) => {
-              const id = item.getAttribute("data-song-id");
-              if (id && id !== songId) {
-                allSongIds.push(parseInt(id));
-              }
-            });
-
-            // Add other songs to queue (async, don't wait)
-            setTimeout(async () => {
-              for (const id of allSongIds) {
-                try {
-                  const songResponse = await fetch(`api/songs.php?id=${id}`);
-                  const songData = await songResponse.json();
-
-                  if (songData.success) {
-                    window.musicPlayer.addToQueue(songData.song);
-                  }
-                } catch (error) {
-                  console.error("Error fetching song:", error);
-                }
-              }
-            }, 0);
-
-            showNotification(`Playing "${songTitle}"`);
-          } else {
-            // Fallback
-            localStorage.setItem(
-              "meplay_now_playing",
-              JSON.stringify({
-                id: songId,
-                title: songTitle,
-              })
-            );
-            showNotification(`Playing "${songTitle}"`);
-          }
-        } else {
-          showNotification("Failed to play song", "error");
-        }
-      } catch (error) {
-        console.error("Error:", error);
-        showNotification("Network error", "error");
-      }
-    });
-  });
-
-  // ====== DROPDOWN SYSTEM ======
-  let activeDropdown = null;
-
-  function closeDropdowns() {
-    if (activeDropdown) {
-      activeDropdown.style.display = "none";
-      activeDropdown = null;
-    }
-  }
-
-  document.addEventListener("click", function (e) {
-    if (!e.target.closest(".more-btn") && !e.target.closest(".song-dropdown")) {
-      closeDropdowns();
-    }
-  });
-
-  document.addEventListener("keydown", function (e) {
-    if (e.key === "Escape") closeDropdowns();
-  });
-
-  // ====== SONG DROPDOWNS ======
-  document.querySelectorAll(".song-more-btn").forEach((button) => {
-    button.addEventListener("click", function (e) {
-      e.stopPropagation();
-
-      const index = this.getAttribute("data-index");
-      const dropdown = document.getElementById("songDropdown-" + index);
-
-      if (!dropdown) return;
-
-      if (dropdown.style.display === "block") {
-        dropdown.style.display = "none";
-        activeDropdown = null;
-      } else {
-        closeDropdowns();
-        dropdown.style.display = "block";
-        dropdown.style.position = "fixed";
-
-        const rect = this.getBoundingClientRect();
-        dropdown.style.top = rect.bottom + 5 + "px";
-        dropdown.style.left = rect.right - dropdown.offsetWidth + "px";
-
-        activeDropdown = dropdown;
-      }
-    });
-  });
-
-  // ====== LIKE SONG ======
-  document.querySelectorAll(".like-song").forEach((button) => {
-    button.addEventListener("click", function (e) {
-      e.preventDefault();
-      e.stopPropagation();
-
-      const songId = this.getAttribute("data-song-id");
-      const isLiked = this.classList.contains("liked");
-      const songItem = this.closest(".song-item");
-      const songTitle = songItem
-        ? songItem.querySelector(".song-info h4").textContent
-        : "Song";
-
-      closeDropdowns();
-
-      fetch("api/likes.php", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          song_id: parseInt(songId),
-          action: isLiked ? "unlike" : "like",
-        }),
-      })
-        .then((response) => response.json())
-        .then((data) => {
-          if (data.success) {
-            // Update button in dropdown
-            if (isLiked) {
-              this.classList.remove("liked");
-              this.innerHTML = '<i class="far fa-heart"></i> Like';
-            } else {
-              this.classList.add("liked");
-              this.innerHTML = '<i class="fas fa-heart"></i> Unlike';
-            }
-
-            // Update heart button
-            const likeBtn = document.querySelector(
-              `.like-btn[data-song-id="${songId}"]`
-            );
-            if (likeBtn) {
-              const icon = likeBtn.querySelector("i");
-              if (isLiked) {
-                likeBtn.classList.remove("liked");
-                icon.classList.remove("fas");
-                icon.classList.add("far");
-              } else {
-                likeBtn.classList.add("liked");
-                icon.classList.remove("far");
-                icon.classList.add("fas");
-              }
-            }
-
-            showNotification(
-              isLiked
-                ? `Removed "${songTitle}" from liked songs`
-                : `Added "${songTitle}" to liked songs`,
-              "success"
-            );
-          } else {
-            showNotification(data.message || "Failed to update like", "error");
-          }
-        })
-        .catch((error) => {
-          console.error("Error:", error);
-          showNotification("Network error", "error");
-        });
-
-      return false;
-    });
-  });
-
-  // ====== ADD TO QUEUE ======
-  document.querySelectorAll(".add-to-queue").forEach((button) => {
-    button.addEventListener("click", function (e) {
-      e.preventDefault();
-      e.stopPropagation();
-
-      const songId = this.getAttribute("data-song-id");
-      const songItem = this.closest(".song-item");
-      const songTitle = songItem
-        ? songItem.querySelector(".song-info h4").textContent
-        : "Song";
-
-      closeDropdowns();
-
-      // Add to queue via player if available
-      if (window.musicPlayer) {
-        fetch(`api/songs.php?id=${songId}`)
-          .then((response) => response.json())
-          .then((data) => {
-            if (data.success) {
-              window.musicPlayer.addToQueue(data.song);
-              showNotification(`"${songTitle}" added to queue`);
-            } else {
-              showNotification("Failed to get song data", "error");
-            }
-          })
-          .catch((error) => {
-            console.error("Error:", error);
-            showNotification("Network error", "error");
-          });
-      } else {
-        // Fallback to localStorage
-        let queue = JSON.parse(localStorage.getItem("meplay_queue") || "[]");
-        if (!queue.includes(songId)) {
-          queue.push(songId);
-          localStorage.setItem("meplay_queue", JSON.stringify(queue));
-          showNotification(`"${songTitle}" added to queue`);
-        } else {
-          showNotification(`"${songTitle}" already in queue`, "error");
-        }
-      }
-
-      return false;
-    });
-  });
-
-  // ====== ADD TO PLAYLIST ======
-  document
-    .querySelectorAll(".add-to-playlist:not(.disabled)")
-    .forEach((button) => {
-      button.addEventListener("click", function (e) {
-        e.preventDefault();
-        e.stopPropagation();
-
-        const songId = this.getAttribute("data-song-id");
-        const playlistId = this.getAttribute("data-playlist-id");
-        const songItem = this.closest(".song-item");
-        const songTitle = songItem
-          ? songItem.querySelector(".song-info h4").textContent
-          : "Song";
-        const playlistName = button.textContent.trim();
-
-        closeDropdowns();
-
-        fetch("api/playlists.php", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            action: "add_song",
-            song_id: parseInt(songId),
-            playlist_id: parseInt(playlistId),
-          }),
-        })
-          .then((response) => response.json())
-          .then((data) => {
-            if (data.success) {
-              showNotification(`"${songTitle}" added to "${playlistName}"`);
-            } else {
-              showNotification(
-                data.message || "Failed to add to playlist",
-                "error"
-              );
-            }
-          })
-          .catch((error) => {
-            console.error("Error:", error);
-            showNotification("Network error", "error");
-          });
-
-        return false;
-      });
-    });
-
-  // ====== CREATE PLAYLIST ======
-  document.querySelectorAll(".create-playlist").forEach((button) => {
-    button.addEventListener("click", function (e) {
-      e.preventDefault();
-      e.stopPropagation();
-
-      const songId = this.getAttribute("data-song-id");
-
-      closeDropdowns();
-      document.getElementById("songIdForPlaylist").value = songId;
-      document.getElementById("createPlaylistModal").classList.add("show");
-
-      return false;
-    });
-  });
-
-  // ====== MODAL FUNCTIONS ======
-  document.querySelectorAll(".close-modal").forEach((btn) => {
-    btn.addEventListener("click", function () {
-      document.querySelectorAll(".modal").forEach((modal) => {
-        modal.classList.remove("show");
-      });
-    });
-  });
-
-  // ====== CREATE PLAYLIST FORM ======
-  const createForm = document.getElementById("createPlaylistForm");
-  if (createForm) {
-    createForm.addEventListener("submit", function (e) {
-      e.preventDefault();
-
-      const formData = new FormData(this);
-      const songId = formData.get("song_id");
-      const title = formData.get("title");
-
-      fetch("api/playlists.php", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          action: "create",
-          title: title,
-          description: formData.get("description"),
-          song_id: songId ? parseInt(songId) : null,
-        }),
-      })
-        .then((response) => response.json())
-        .then((data) => {
-          if (data.success) {
-            showNotification(`Playlist "${title}" created successfully`);
-            document
-              .getElementById("createPlaylistModal")
-              .classList.remove("show");
-            this.reset();
-          } else {
-            showNotification(
-              data.message || "Failed to create playlist",
-              "error"
-            );
-          }
-        })
-        .catch((error) => {
-          console.error("Error:", error);
-          showNotification("Network error", "error");
-        });
-    });
-  }
-
-  // ====== LIKE BUTTON CLICKS ======
-  document.querySelectorAll(".like-btn").forEach((button) => {
-    button.addEventListener("click", async function (e) {
-      e.preventDefault();
-      e.stopPropagation();
-
-      const songId = this.getAttribute("data-song-id");
-      const isLiked = this.classList.contains("liked");
-
-      fetch("api/likes.php", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          song_id: parseInt(songId),
-          action: isLiked ? "unlike" : "like",
-        }),
-      })
-        .then((response) => response.json())
-        .then((data) => {
-          if (data.success) {
-            const icon = this.querySelector("i");
-            const newIsLiked = data.is_liked;
-
-            if (newIsLiked) {
-              this.classList.add("liked");
-              icon.classList.remove("far");
-              icon.classList.add("fas");
-            } else {
-              this.classList.remove("liked");
-              icon.classList.remove("fas");
-              icon.classList.add("far");
-            }
-
-            // Update dropdown item
-            const dropdownItem = document.querySelector(
-              `.like-song[data-song-id="${songId}"]`
-            );
-            if (dropdownItem) {
-              const dropdownIcon = dropdownItem.querySelector("i");
-              if (newIsLiked) {
-                dropdownItem.classList.add("liked");
-                dropdownIcon.classList.remove("far");
-                dropdownIcon.classList.add("fas");
-                dropdownItem.innerHTML = '<i class="fas fa-heart"></i> Unlike';
-              } else {
-                dropdownItem.classList.remove("liked");
-                dropdownIcon.classList.remove("fas");
-                dropdownIcon.classList.add("far");
-                dropdownItem.innerHTML = '<i class="far fa-heart"></i> Like';
-              }
-            }
-
-            showNotification(
-              newIsLiked ? "Added to liked songs" : "Removed from liked songs",
-              "success"
-            );
-          } else {
-            showNotification(data.message || "Failed to update like", "error");
-          }
-        })
-        .catch((error) => {
-          console.error("Error:", error);
-          showNotification("Network error", "error");
-        });
-    });
-  });
-
-  console.log("All event listeners set up successfully");
+}
+
+// Initialize when DOM is loaded
+document.addEventListener("DOMContentLoaded", () => {
+  window.albumDetailManager = new AlbumDetailManager();
 });

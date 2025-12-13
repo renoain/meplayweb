@@ -12,7 +12,7 @@ function isAllowedAudioFile($filename) {
 }
 
 function validateFileSize($file, $max_size_mb = 5) {
-    $max_size = $max_size_mb * 1024 * 1024; // Convert to bytes
+    $max_size = $max_size_mb * 1024 * 1024;  
     return $file['size'] <= $max_size;
 }
 

@@ -42,7 +42,7 @@
 
 .album-details {
   flex: 1;
-  min-width: 0; /* Prevent text overflow */
+  min-width: 0;
 }
 
 .album-details h4 {
@@ -67,7 +67,7 @@
   text-align: left;
 }
 
-/* Searchable Select - IMPROVED ALIGNMENT */
+/* Searchable Select */
 .searchable-select {
   position: relative;
   width: 100%;

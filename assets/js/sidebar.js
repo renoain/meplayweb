@@ -1,4 +1,3 @@
-// Sidebar functionality
 class SidebarManager {
   constructor() {
     this.sidebar = document.getElementById("sidebar");

@@ -104,6 +104,16 @@ function addGenre($conn) {
         return array('success' => false, 'message' => 'Nama genre wajib diisi');
     }
     
+    // Validate name length
+    if (strlen($name) > 50) {
+        return array('success' => false, 'message' => 'Nama genre terlalu panjang. Maksimal 50 karakter');
+    }
+    
+    // Validate description length
+    if (strlen($description) > 500) {
+        return array('success' => false, 'message' => 'Deskripsi terlalu panjang. Maksimal 500 karakter');
+    }
+    
     // Validate color format
     if (!preg_match('/^#[a-f0-9]{6}$/i', $color)) {
         return array('success' => false, 'message' => 'Format warna tidak valid. Gunakan format hex: #RRGGBB');
@@ -117,7 +127,7 @@ function addGenre($conn) {
         $stmt->execute();
         
         if ($stmt->rowCount() > 0) {
-            return array('success' => false, 'message' => 'Genre dengan nama tersebut sudah ada');
+            return array('success' => false, 'message' => 'Genre "' . $name . '" sudah ada');
         }
         
         // Insert genre
@@ -148,6 +158,16 @@ function updateGenre($conn) {
         return array('success' => false, 'message' => 'Nama genre wajib diisi');
     }
     
+    // Validate name length
+    if (strlen($name) > 50) {
+        return array('success' => false, 'message' => 'Nama genre terlalu panjang. Maksimal 50 karakter');
+    }
+    
+    // Validate description length
+    if (strlen($description) > 500) {
+        return array('success' => false, 'message' => 'Deskripsi terlalu panjang. Maksimal 500 karakter');
+    }
+    
     // Validate color format
     if (!preg_match('/^#[a-f0-9]{6}$/i', $color)) {
         return array('success' => false, 'message' => 'Format warna tidak valid. Gunakan format hex: #RRGGBB');
@@ -168,11 +188,11 @@ function updateGenre($conn) {
         $stmt->execute();
         
         if ($stmt->rowCount() > 0) {
-            return array('success' => false, 'message' => 'Genre dengan nama tersebut sudah ada');
+            return array('success' => false, 'message' => 'Genre "' . $name . '" sudah ada');
         }
         
         // Update genre
-        $query = "UPDATE genres SET name = :name, description = :description, color = :color WHERE id = :id";
+        $query = "UPDATE genres SET name = :name, description = :description, color = :color, updated_at = NOW() WHERE id = :id";
         $stmt = $conn->prepare($query);
         $stmt->bindParam(":name", $name);
         $stmt->bindParam(":description", $description);
@@ -215,7 +235,7 @@ function deleteGenre($conn, $id) {
         $stmt->bindParam(":id", $id);
         
         if ($stmt->execute()) {
-            return array('success' => true, 'message' => 'Genre berhasil dihapus');
+            return array('success' => true, 'message' => 'Genre "' . $genre['name'] . '" berhasil dihapus');
         } else {
             return array('success' => false, 'message' => 'Gagal menghapus genre');
         }
@@ -224,8 +244,27 @@ function deleteGenre($conn, $id) {
         return array('success' => false, 'message' => 'Database error: ' . $exception->getMessage());
     }
 }
-?>
 
+// Helper function to get form value
+function getFormValue($field, $edit_genre, $post_data) {
+    // Priority 1: Form submission data (after validation error)
+    if (isset($post_data[$field]) && $post_data[$field] !== '') {
+        return htmlspecialchars($post_data[$field]);
+    }
+    
+    // Priority 2: Editing existing genre
+    if ($edit_genre && isset($edit_genre[$field]) && $edit_genre[$field] !== '') {
+        return htmlspecialchars($edit_genre[$field]);
+    }
+    
+    // Default: empty string or default value
+    if ($field === 'color') {
+        return '#667eea';
+    }
+    
+    return '';
+}
+?>
 <!DOCTYPE html>
 <html lang="id">
 <head>
@@ -234,11 +273,12 @@ function deleteGenre($conn, $id) {
     <title>Kelola Genre - Admin <?php echo SITE_NAME; ?></title>
     <link rel="stylesheet" href="assets/css/admin-main.css">
     <link rel="stylesheet" href="assets/css/admin-genres.css">
-     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="assets/css/sidebar.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
 </head>
 <body>
     <div class="admin-container">
-        <!-- Sidebar -->
+        
         <?php include 'includes/sidebar.php'; ?>
 
         <!-- Main Content -->
@@ -246,7 +286,15 @@ function deleteGenre($conn, $id) {
             <header class="admin-header">
                 <div class="header-left">
                     <h1>Kelola Genre</h1>
-                    <p>Kelola genre musik</p>
+                    <p>Kelola data genre musik</p>
+                </div>
+                <div class="header-right">
+                    <div class="user-menu">
+                        <img src="../uploads/users/<?php echo $_SESSION['profile_picture']; ?>" 
+                             alt="Profile" class="user-avatar">
+                        <span><?php echo $_SESSION['username']; ?></span>
+                    </div>
+                </div>
             </header>
 
             <main class="admin-content">
@@ -262,7 +310,7 @@ function deleteGenre($conn, $id) {
                     <div class="form-card">
                         <div class="card-header">
                             <h3>
-                                <i class="fas fa-<?php echo $edit_genre ? 'edit' : 'plus'; ?>"></i>
+                                <i class="fas fa-<?php echo $edit_genre ? 'edit' : 'tag'; ?>"></i>
                                 <?php echo $edit_genre ? 'Edit Genre' : 'Tambah Genre Baru'; ?>
                             </h3>
                             <?php if ($edit_genre): ?>
@@ -278,32 +326,34 @@ function deleteGenre($conn, $id) {
                                 <?php endif; ?>
 
                                 <div class="form-grid">
+                                    <!-- Name -->
                                     <div class="form-group">
-                                        <label for="name">Nama Genre *</label>
+                                        <label for="name" class="required">Nama Genre</label>
                                         <input type="text" id="name" name="name" required
-                                               value="<?php echo $edit_genre ? htmlspecialchars($edit_genre['name']) : (isset($_POST['name']) ? htmlspecialchars($_POST['name']) : ''); ?>"
+                                               value="<?php echo getFormValue('name', $edit_genre, $_POST); ?>"
                                                placeholder="Masukkan nama genre">
-                                    </div>
+                                     </div>
 
+                                    <!-- Color -->
                                     <div class="form-group">
                                         <label for="color">Warna</label>
                                         <div class="color-picker-container">
                                             <input type="color" id="color" name="color" 
-                                                   value="<?php echo $edit_genre ? htmlspecialchars($edit_genre['color']) : (isset($_POST['color']) ? htmlspecialchars($_POST['color']) : '#667eea'); ?>"
+                                                   value="<?php echo getFormValue('color', $edit_genre, $_POST); ?>"
                                                    class="color-input">
                                             <input type="text" id="color_hex" 
-                                                   value="<?php echo $edit_genre ? htmlspecialchars($edit_genre['color']) : (isset($_POST['color']) ? htmlspecialchars($_POST['color']) : '#667eea'); ?>"
+                                                   value="<?php echo getFormValue('color', $edit_genre, $_POST); ?>"
                                                    class="color-hex" placeholder="#667eea" maxlength="7">
                                         </div>
-                                        <small class="form-help">Pilih warna untuk genre ini</small>
-                                    </div>
+                                     </div>
                                 </div>
 
+                                <!-- Description -->
                                 <div class="form-group">
                                     <label for="description">Deskripsi</label>
                                     <textarea id="description" name="description" rows="4" 
-                                              placeholder="Masukkan deskripsi genre..."><?php echo $edit_genre ? htmlspecialchars($edit_genre['description']) : (isset($_POST['description']) ? htmlspecialchars($_POST['description']) : ''); ?></textarea>
-                                </div>
+                                              placeholder="Masukkan deskripsi genre (opsional)..."><?php echo getFormValue('description', $edit_genre, $_POST); ?></textarea>
+                                 </div>
 
                                 <div class="form-actions">
                                     <?php if ($edit_genre): ?>
@@ -334,7 +384,7 @@ function deleteGenre($conn, $id) {
                             <?php if ($genres && count($genres) > 0): ?>
                                 <div class="genres-grid">
                                     <?php foreach ($genres as $genre): ?>
-                                        <div class="genre-card" style="border-left: 4px solid <?php echo htmlspecialchars($genre['color']); ?>">
+                                        <div class="genre-card" style="border-left-color: <?php echo htmlspecialchars($genre['color']); ?>">
                                             <div class="genre-header">
                                                 <div class="genre-color" style="background: <?php echo htmlspecialchars($genre['color']); ?>"></div>
                                                 <h4><?php echo htmlspecialchars($genre['name']); ?></h4>
@@ -343,7 +393,7 @@ function deleteGenre($conn, $id) {
                                                        class="btn btn-sm btn-outline" title="Edit">
                                                         <i class="fas fa-edit"></i>
                                                     </a>
-                                                    <button onclick="confirmDelete(<?php echo $genre['id']; ?>)" 
+                                                    <button onclick="confirmDelete(<?php echo $genre['id']; ?>, '<?php echo addslashes($genre['name']); ?>')" 
                                                             class="btn btn-sm btn-danger" title="Hapus"
                                                             <?php echo $genre['songs_count'] > 0 ? 'disabled' : ''; ?>>
                                                         <i class="fas fa-trash"></i>
@@ -384,72 +434,7 @@ function deleteGenre($conn, $id) {
         </div>
     </div>
 
-    <script>
-    function confirmDelete(genreId) {
-        if (confirm('Apakah Anda yakin ingin menghapus genre ini?')) {
-            window.location.href = 'genres.php?action=delete&id=' + genreId;
-        }
-    }
-    
-    // Form validation
-    document.getElementById('genreForm')?.addEventListener('submit', function(e) {
-        const name = document.getElementById('name').value.trim();
-        const color = document.getElementById('color_hex').value;
-        
-        if (!name) {
-            e.preventDefault();
-            alert('Nama genre wajib diisi!');
-            return false;
-        }
-        
-        // Validate color format
-        const colorRegex = /^#[0-9A-F]{6}$/i;
-        if (color && !colorRegex.test(color)) {
-            e.preventDefault();
-            alert('Format warna tidak valid. Gunakan format hex: #RRGGBB');
-            return false;
-        }
-        
-        return true;
-    });
-
-    // Color picker functionality
-    document.addEventListener('DOMContentLoaded', function() {
-        const colorInput = document.getElementById('color');
-        const colorHex = document.getElementById('color_hex');
-        
-        if (colorInput && colorHex) {
-            // Sync color picker with hex input
-            colorInput.addEventListener('input', function() {
-                colorHex.value = this.value;
-            });
-            
-            // Sync hex input with color picker
-            colorHex.addEventListener('input', function() {
-                const value = this.value;
-                if (value.startsWith('#') && value.length === 7) {
-                    colorInput.value = value;
-                }
-            });
-            
-            // Validate hex input on blur
-            colorHex.addEventListener('blur', function() {
-                const value = this.value;
-                const colorRegex = /^#[0-9A-F]{6}$/i;
-                
-                if (value && !colorRegex.test(value)) {
-                    this.setCustomValidity('Format warna tidak valid. Gunakan: #RRGGBB');
-                } else {
-                    this.setCustomValidity('');
-                }
-            });
-        }
-    });
-
-    // Auto-capitalize genre name
-    document.getElementById('name')?.addEventListener('blur', function() {
-        this.value = this.value.charAt(0).toUpperCase() + this.value.slice(1);
-    });
-    </script>
+    <script src="assets/js/admin-main.js"></script>
+    <script src="assets/js/admin-genres.js"></script>
 </body>
 </html>

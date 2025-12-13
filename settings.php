@@ -171,7 +171,6 @@ $user = $stmt->fetch(PDO::FETCH_ASSOC);
                     <!-- User Menu -->
                     <div class="user-menu-container">
                         <button class="user-menu-btn" id="userMenuBtn">
-                            <img src="<?php echo getAvatarImage($_SESSION['profile_picture']); ?>" 
                                  alt="<?php echo htmlspecialchars($_SESSION['username']); ?>" class="user-avatar">
                             <span><?php echo htmlspecialchars($_SESSION['full_name'] ?: $_SESSION['username']); ?></span>
                             <i class="fas fa-chevron-down"></i>

@@ -72,7 +72,7 @@ try {
 </head>
 <body>
     <div class="admin-container">
-        <!-- Sidebar -->
+        
         <?php include 'includes/sidebar.php'; ?>
 
         <!-- Main Content -->
@@ -144,25 +144,25 @@ try {
                 <!-- Quick Actions -->
                 <div class="content-card">
                     <div class="card-header">
-                        <h3><i class="fas fa-bolt"></i> Quick Actions</h3>
+                        <h3>  Quick Actions</h3>
                     </div>
                     <div class="card-content">
                         <div class="quick-actions">
                             <a href="songs.php" class="action-btn">
                                 <i class="fas fa-plus"></i>
-                                <span>Tambah Lagu</span>
+                                <span> Lagu</span>
                             </a>
                             <a href="artists.php" class="action-btn">
                                 <i class="fas fa-user-plus"></i>
-                                <span>Tambah Artis</span>
+                                <span> Artis</span>
                             </a>
                             <a href="albums.php" class="action-btn">
                                 <i class="fas fa-compact-disc"></i>
-                                <span>Tambah Album</span>
+                                <span> Album</span>
                             </a>
                             <a href="genres.php" class="action-btn">
                                 <i class="fas fa-tag"></i>
-                                <span>Tambah Genre</span>
+                                <span> Genre</span>
                             </a>
                         </div>
                     </div>

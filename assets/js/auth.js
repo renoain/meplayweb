@@ -1,4 +1,3 @@
-// Enhanced auth.js with logout functionality
 document.addEventListener("DOMContentLoaded", function () {
   // Form validation for login
   const loginForm = document.querySelector(".auth-form");

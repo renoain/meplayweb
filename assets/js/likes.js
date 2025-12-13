@@ -1,16 +1,15 @@
-// assets/js/likes.js - DIPERBAIKI untuk dropdown kiri
-
 class LikesManager {
   constructor() {
     this.isInitialized = false;
     this.activeDropdown = null;
+    this.activeSubmenu = null;
     this.init();
   }
 
   init() {
     if (this.isInitialized) return;
 
-    console.log("🎵 LikesManager initialized");
+    console.log(" LikesManager initialized");
     this.setupEventListeners();
     this.isInitialized = true;
   }
@@ -39,8 +38,8 @@ class LikesManager {
       if (e.key === "Escape") this.closeDropdowns();
     });
 
-    // Like buttons
-    document.querySelectorAll(".like-song").forEach((button) => {
+    // Like buttons in dropdown
+    document.querySelectorAll(".song-dropdown .like-song").forEach((button) => {
       button.addEventListener("click", (e) => {
         e.preventDefault();
         e.stopPropagation();
@@ -49,17 +48,28 @@ class LikesManager {
     });
 
     // Add to queue buttons
-    document.querySelectorAll(".add-to-queue").forEach((button) => {
+    document
+      .querySelectorAll(".song-dropdown .add-to-queue")
+      .forEach((button) => {
+        button.addEventListener("click", (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          this.handleAddToQueue(button);
+        });
+      });
+
+    // Submenu triggers
+    document.querySelectorAll(".submenu-trigger").forEach((button) => {
       button.addEventListener("click", (e) => {
         e.preventDefault();
         e.stopPropagation();
-        this.handleAddToQueue(button);
+        this.toggleSubmenu(button);
       });
     });
 
-    // Add to playlist buttons
+    // Add to playlist buttons in submenu
     document
-      .querySelectorAll(".add-to-playlist:not(.disabled)")
+      .querySelectorAll(".submenu .add-to-playlist:not(.disabled)")
       .forEach((button) => {
         button.addEventListener("click", (e) => {
           e.preventDefault();
@@ -77,8 +87,8 @@ class LikesManager {
       });
     });
 
-    // Play buttons
-    document.querySelectorAll(".play-btn").forEach((button) => {
+    // Play buttons on song covers
+    document.querySelectorAll(".song-cover .play-btn").forEach((button) => {
       button.addEventListener("click", (e) => {
         e.preventDefault();
         e.stopPropagation();
@@ -123,54 +133,110 @@ class LikesManager {
 
   toggleSongDropdown(button) {
     const songId = button.getAttribute("data-song-id");
-    const dropdown = document.getElementById(`dropdown-${songId}`);
+    const songItem = button.closest(".song-item");
+    let dropdown;
 
-    if (!dropdown) return;
+    if (songId) {
+      dropdown = document.getElementById(`dropdown-${songId}`);
+    }
+
+    if (!dropdown) {
+      dropdown =
+        button.closest(".song-actions")?.querySelector(".song-dropdown") ||
+        button.nextElementSibling;
+    }
+
+    if (!dropdown || !dropdown.classList.contains("song-dropdown")) return;
 
     if (
       this.activeDropdown === dropdown &&
       dropdown.style.display === "block"
     ) {
       dropdown.style.display = "none";
+      dropdown.classList.remove("show");
       this.activeDropdown = null;
+      this.closeSubmenu();
     } else {
       this.closeDropdowns();
 
-      // Position dropdown to the LEFT
+      // Position dropdown to the LEFT (like in index.php)
       const rect = button.getBoundingClientRect();
       dropdown.style.display = "block";
+      dropdown.classList.add("show");
       dropdown.style.position = "fixed";
-      dropdown.style.zIndex = "1000";
+      dropdown.style.zIndex = "10000";
 
       // Calculate position - align to LEFT side of button
       dropdown.style.top = `${rect.bottom + 5}px`;
 
       // Position to the LEFT of the button
       const dropdownWidth = dropdown.offsetWidth;
-      const leftPosition = rect.left - dropdownWidth;
+      let leftPosition = rect.left - dropdownWidth;
 
       // If dropdown would go off screen on left, align to right instead
       if (leftPosition < 10) {
-        dropdown.style.left = `${rect.right + 5}px`;
-      } else {
-        dropdown.style.left = `${leftPosition}px`;
+        leftPosition = rect.right + 5;
       }
 
+      dropdown.style.left = `${leftPosition}px`;
+
       this.activeDropdown = dropdown;
+
+      // Close submenu if open
+      this.closeSubmenu();
+    }
+  }
+
+  toggleSubmenu(button) {
+    const submenu = button
+      .closest(".dropdown-submenu")
+      ?.querySelector(".submenu");
+    if (!submenu) return;
+
+    if (this.activeSubmenu === submenu) {
+      this.closeSubmenu();
+    } else {
+      this.closeSubmenu();
+      this.activeSubmenu = submenu;
+
+      // Position submenu to the LEFT on desktop
+      if (window.innerWidth > 768) {
+        const rect = button.getBoundingClientRect();
+        submenu.style.display = "block";
+        submenu.style.position = "fixed";
+        submenu.style.zIndex = "10001";
+        submenu.style.top = `${rect.top}px`;
+        submenu.style.right = `${window.innerWidth - rect.left + 5}px`;
+      } else {
+        // On mobile, just show it
+        submenu.style.display = "block";
+        submenu.style.maxHeight = "200px";
+      }
+    }
+  }
+
+  closeSubmenu() {
+    if (this.activeSubmenu) {
+      this.activeSubmenu.style.display = "none";
+      this.activeSubmenu.style.maxHeight = "0";
+      this.activeSubmenu = null;
     }
   }
 
   closeDropdowns() {
     if (this.activeDropdown) {
       this.activeDropdown.style.display = "none";
+      this.activeDropdown.classList.remove("show");
       this.activeDropdown = null;
     }
+    this.closeSubmenu();
   }
 
   closeModals() {
     document.querySelectorAll(".modal").forEach((modal) => {
       modal.classList.remove("show");
     });
+    document.body.style.overflow = "";
   }
 
   async handleLikeButton(button) {
@@ -209,7 +275,8 @@ class LikesManager {
       if (data.success) {
         this.updateLikeButtons(songId, !isLiked);
         this.showNotification(
-          isLiked ? "Removed from liked songs" : "Added to liked songs"
+          isLiked ? "Removed from liked songs" : "Added to liked songs",
+          "success"
         );
 
         // If on likes page and unliking, remove from list
@@ -228,7 +295,7 @@ class LikesManager {
   }
 
   updateLikeButtons(songId, isLiked) {
-    // Update all like buttons for this song
+    // Update like buttons in dropdown
     document
       .querySelectorAll(`.like-song[data-song-id="${songId}"]`)
       .forEach((button) => {
@@ -270,13 +337,18 @@ class LikesManager {
 
   async handleAddToQueue(button) {
     const songId = button.getAttribute("data-song-id");
+    const songItem = button.closest(".song-item");
+    const songTitle = songItem
+      ? songItem.querySelector(".song-info h4").textContent
+      : "Song";
+
     try {
       const response = await fetch(`api/songs.php?id=${songId}`);
       const data = await response.json();
 
       if (data.success && window.musicPlayer) {
         window.musicPlayer.addToQueue(data.song);
-        this.showNotification("Added to queue");
+        this.showNotification(`"${songTitle}" added to queue`);
       }
     } catch (error) {
       console.error("Error adding to queue:", error);
@@ -289,6 +361,10 @@ class LikesManager {
     const songId = button.getAttribute("data-song-id");
     const playlistId = button.getAttribute("data-playlist-id");
     const playlistName = button.textContent.trim();
+    const songItem = button.closest(".song-item");
+    const songTitle = songItem
+      ? songItem.querySelector(".song-info h4").textContent
+      : "Song";
 
     try {
       const response = await fetch("api/playlists.php", {
@@ -306,7 +382,7 @@ class LikesManager {
       const data = await response.json();
 
       if (data.success) {
-        this.showNotification(`Added to "${playlistName}"`);
+        this.showNotification(`"${songTitle}" added to "${playlistName}"`);
       } else {
         this.showNotification(
           data.message || "Error adding to playlist",
@@ -317,7 +393,7 @@ class LikesManager {
       console.error("Add to playlist error:", error);
       this.showNotification("Error adding to playlist", "error");
     }
-    this.closeDropdowns();
+    this.closeSubmenu();
   }
 
   handleCreatePlaylist(button) {
@@ -328,12 +404,17 @@ class LikesManager {
     if (modal && songIdInput) {
       songIdInput.value = songId;
       modal.classList.add("show");
+      document.body.style.overflow = "hidden";
     }
     this.closeDropdowns();
   }
 
   async handlePlayButton(button) {
     const songId = button.getAttribute("data-song-id");
+    const songItem = button.closest(".song-item");
+    const songTitle = songItem
+      ? songItem.querySelector(".song-info h4").textContent
+      : "Song";
 
     try {
       const response = await fetch(`api/songs.php?id=${songId}`);
@@ -341,7 +422,7 @@ class LikesManager {
 
       if (data.success && window.musicPlayer) {
         window.musicPlayer.playSong(data.song);
-        this.showNotification("Now playing");
+        this.showNotification(`Playing "${songTitle}"`);
       }
     } catch (error) {
       console.error("Error playing song:", error);
@@ -363,75 +444,39 @@ class LikesManager {
       }
     });
 
-    if (songIds.length > 0) {
-      // Save to localStorage as current playlist
-      localStorage.setItem(
-        "meplay_current_playlist",
-        JSON.stringify({
-          ids: songIds,
-          titles: songTitles,
-          name: "Liked Songs",
-        })
-      );
-
-      // Add all to queue
-      songIds.forEach((id, index) => {
-        this.addToLocalQueue(id, songTitles[index]);
-      });
-
-      this.showNotification(`Playing ${songIds.length} liked songs`);
+    if (songIds.length === 0) {
+      this.showNotification("No songs to play", "error");
+      return;
     }
-  }
-
-  addToLocalQueue(songId, songTitle = "Song") {
-    // Initialize queue in localStorage if not exists
-    let queue = JSON.parse(localStorage.getItem("meplay_queue") || "[]");
-
-    // Check if song already in queue
-    if (!queue.includes(songId)) {
-      queue.push(songId);
-      localStorage.setItem("meplay_queue", JSON.stringify(queue));
-      console.log("Added to local queue:", songId);
-      return true;
-    }
-    return false;
-  }
-
-  async handleCreatePlaylistForm() {
-    const form = document.getElementById("createPlaylistForm");
-    const formData = new FormData(form);
-    const songId = document.getElementById("songIdForPlaylist").value;
-    const title = formData.get("title");
 
     try {
-      const response = await fetch("api/playlists.php", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          action: "create",
-          title: title,
-          description: formData.get("description"),
-          song_id: songId ? parseInt(songId) : null,
-        }),
-      });
+      // Fetch first song data to play immediately
+      const firstSongResponse = await fetch(`api/songs.php?id=${songIds[0]}`);
+      const firstSongData = await firstSongResponse.json();
 
-      const data = await response.json();
+      if (firstSongData.success && window.musicPlayer) {
+        // Clear queue and play first song
+        window.musicPlayer.clearQueue();
+        window.musicPlayer.playSong(firstSongData.song);
 
-      if (data.success) {
-        this.showNotification(`Playlist "${title}" created successfully`);
-        this.closeModals();
-        form.reset();
-      } else {
-        this.showNotification(
-          data.message || "Error creating playlist",
-          "error"
-        );
+        // Add remaining songs to queue
+        for (let i = 1; i < songIds.length; i++) {
+          try {
+            const songResponse = await fetch(`api/songs.php?id=${songIds[i]}`);
+            const songData = await songResponse.json();
+            if (songData.success) {
+              window.musicPlayer.addToQueue(songData.song);
+            }
+          } catch (error) {
+            console.error("Error adding song to queue:", error);
+          }
+        }
+
+        this.showNotification(`Playing ${songIds.length} liked songs`);
       }
     } catch (error) {
-      console.error("Create playlist error:", error);
-      this.showNotification("Error creating playlist", "error");
+      console.error("Error playing all songs:", error);
+      this.showNotification("Error playing songs", "error");
     }
   }
 
@@ -446,6 +491,7 @@ class LikesManager {
       songElement.style.padding = "0";
       songElement.style.margin = "0";
       songElement.style.border = "none";
+      songElement.style.overflow = "hidden";
 
       setTimeout(() => {
         songElement.remove();
@@ -470,15 +516,15 @@ class LikesManager {
     const songsList = document.querySelector(".songs-list");
     if (songsList) {
       songsList.innerHTML = `
-                <div class="no-songs">
-                    <div class="no-songs-content">
-                        <i class="fas fa-heart fa-4x"></i>
-                        <h2>No liked songs yet</h2>
-                        <p>Start liking songs to see them here</p>
-                        <a href="index.php" class="btn-primary">Discover Music</a>
-                    </div>
-                </div>
-            `;
+        <div class="no-songs">
+          <div class="no-songs-content">
+            <i class="fas fa-heart fa-4x"></i>
+            <h2>No liked songs yet</h2>
+            <p>Start liking songs to see them here</p>
+            <a href="index.php" class="btn-primary">Discover Music</a>
+          </div>
+        </div>
+      `;
     }
   }
 
@@ -492,13 +538,11 @@ class LikesManager {
     const notification = document.createElement("div");
     notification.className = `notification notification-${type}`;
     notification.innerHTML = `
-            <div class="notification-content">
-                <i class="fas fa-${
-                  type === "success" ? "check" : "exclamation"
-                }"></i>
-                <span>${message}</span>
-            </div>
-        `;
+      <div class="notification-content">
+        <i class="fas fa-${type === "success" ? "check" : "exclamation"}"></i>
+        <span>${message}</span>
+      </div>
+    `;
 
     document.body.appendChild(notification);
 
@@ -508,6 +552,54 @@ class LikesManager {
       notification.classList.remove("show");
       setTimeout(() => notification.remove(), 300);
     }, 3000);
+  }
+
+  async handleCreatePlaylistForm() {
+    const form = document.getElementById("createPlaylistForm");
+    const formData = new FormData(form);
+    const songId = document.getElementById("songIdForPlaylist").value;
+    const title = formData.get("title");
+
+    if (!title.trim()) {
+      this.showNotification("Please enter a playlist title", "error");
+      return;
+    }
+
+    try {
+      const response = await fetch("api/playlists.php", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          action: "create",
+          title: title,
+          description: formData.get("description"),
+          song_id: songId ? parseInt(songId) : null,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        this.showNotification(`Playlist "${title}" created successfully`);
+        this.closeModals();
+        form.reset();
+
+        // Refresh page or update UI as needed
+        setTimeout(() => {
+          window.location.reload();
+        }, 1500);
+      } else {
+        this.showNotification(
+          data.message || "Error creating playlist",
+          "error"
+        );
+      }
+    } catch (error) {
+      console.error("Create playlist error:", error);
+      this.showNotification("Error creating playlist", "error");
+    }
   }
 }
 

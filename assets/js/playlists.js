@@ -1,5 +1,3 @@
-// assets/js/playlists.js
-
 class PlaylistsManager {
   constructor() {
     this.init();

@@ -1,4 +1,3 @@
-// Albums specific JavaScript
 document.addEventListener("DOMContentLoaded", function () {
   initializeAlbumsForm();
   initializeAlbumsUpload();

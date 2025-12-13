@@ -1,8 +1,6 @@
 <?php
-// config/constants.php
-
-// Start session hanya jika belum dimulai
-if (session_status() == PHP_SESSION_NONE) {
+ 
+ if (session_status() == PHP_SESSION_NONE) {
     session_start();
 }
 

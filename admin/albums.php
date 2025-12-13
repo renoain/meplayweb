@@ -504,7 +504,7 @@ function getYearValue($edit_album, $post_data) {
 </head>
 <body>
     <div class="admin-container">
-        <!-- Sidebar -->
+        
         <?php include 'includes/sidebar.php'; ?>
 
         <!-- Main Content -->
@@ -525,10 +525,7 @@ function getYearValue($edit_album, $post_data) {
 
             <main class="admin-content">
                 <?php if (!$gd_available): ?>
-                    <div class="alert alert-warning">
-                        <i class="fas fa-exclamation-triangle"></i>
-                        <strong>Peringatan:</strong> Ekstensi GD tidak tersedia. Upload gambar tetap bekerja, tetapi tidak akan di-resize otomatis.
-                    </div>
+                    
                 <?php endif; ?>
 
                 <?php if ($message): ?>
@@ -543,7 +540,7 @@ function getYearValue($edit_album, $post_data) {
                     <div class="form-card">
                         <div class="card-header">
                             <h3>
-                                <i class="fas fa-<?php echo $edit_album ? 'edit' : 'plus'; ?>"></i>
+                                <i class="fas fa-<?php echo $edit_album ? 'edit' : ' '; ?>"></i>
                                 <?php echo $edit_album ? 'Edit Album' : 'Tambah Album Baru'; ?>
                             </h3>
                             <?php if ($edit_album): ?>
@@ -584,8 +581,7 @@ function getYearValue($edit_album, $post_data) {
                                                 <?php endforeach; ?>
                                             </select>
                                         </div>
-                                        <small class="form-help">Wajib dipilih. Gunakan search untuk mencari artis</small>
-                                    </div>
+                                     </div>
 
                                     <div class="form-group">
                                         <label for="release_year">Tahun Rilis</label>
@@ -593,8 +589,7 @@ function getYearValue($edit_album, $post_data) {
                                                min="1900" max="<?php echo date('Y'); ?>" 
                                                value="<?php echo htmlspecialchars(getYearValue($edit_album, $_POST)); ?>"
                                                placeholder="YYYY">
-                                        <small class="form-help">Opsional. Contoh: 2024</small>
-                                    </div>
+                                     </div>
                                 </div>
 
                                 <div class="form-group">
@@ -609,8 +604,7 @@ function getYearValue($edit_album, $post_data) {
                                         <div class="file-info">Belum ada file yang dipilih</div>
                                         <small class="form-help">Format: JPG, PNG, WEBP (maks. 5MB)</small>
                                         <?php if (!$gd_available): ?>
-                                            <small class="form-help warning">⚠️ Gambar tidak akan di-resize otomatis</small>
-                                        <?php endif; ?>
+                                         <?php endif; ?>
                                     </div>
                                     
                                     <?php if ($edit_album && $edit_album['cover_image'] && $edit_album['cover_image'] != 'default-cover.png'): ?>

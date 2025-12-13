@@ -1,4 +1,3 @@
-/* assets/css/sidebar.css */
 .sidebar {
   position: fixed;
   top: 0;
@@ -208,7 +207,7 @@
   width: 100%;
   height: 100%;
   background-color: rgba(0, 0, 0, 0.5);
-  z-index: 10000; /* Very high z-index */
+  z-index: 10000;
   align-items: center;
   justify-content: center;
 }
@@ -225,7 +224,7 @@
   max-height: 90vh;
   overflow-y: auto;
   box-shadow: var(--shadow-lg);
-  z-index: 10001; /* Higher than modal background */
+  z-index: 10001;
 }
 
 .modal-header {
