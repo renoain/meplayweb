@@ -1,3 +1,4 @@
+// assets/js/playlist_detail.js (UPDATE existing file)
 class PlaylistDetailManager {
   constructor() {
     this.playlistId = null;
@@ -7,23 +8,26 @@ class PlaylistDetailManager {
   }
 
   init() {
-    console.log(" PlaylistDetailManager initializing...");
+    console.log("PlaylistDetailManager initializing...");
 
-    // Get playlist ID from URL or data attribute
-    const playlistId = this.getPlaylistId();
-    if (playlistId) {
-      this.playlistId = playlistId;
+    this.playlistId = this.getPlaylistId();
+    if (!this.playlistId) {
+      console.error("Playlist ID not found!");
+      return;
     }
 
     this.setupEventListeners();
     this.setupModalHandlers();
+    this.setupFormHandlers();
     this.setupSearch();
 
-    console.log(" PlaylistDetailManager ready");
+    console.log(
+      "PlaylistDetailManager ready for playlist ID:",
+      this.playlistId
+    );
   }
 
   getPlaylistId() {
-    // Try to get playlist ID from URL
     const urlParams = new URLSearchParams(window.location.search);
     const id = urlParams.get("id");
 
@@ -31,10 +35,9 @@ class PlaylistDetailManager {
       return parseInt(id);
     }
 
-    // Try to get from data attribute
     const playlistHeader = document.querySelector(".playlist-header");
-    if (playlistHeader) {
-      return playlistHeader.dataset.playlistId;
+    if (playlistHeader && playlistHeader.dataset.playlistId) {
+      return parseInt(playlistHeader.dataset.playlistId);
     }
 
     return null;
@@ -42,15 +45,39 @@ class PlaylistDetailManager {
 
   setupEventListeners() {
     // Play All button
-    const playAllBtn = document.getElementById("playAllBtn");
+    const playAllBtn = document.getElementById("playPlaylistBtn");
     if (playAllBtn) {
-      playAllBtn.addEventListener("click", () => this.playPlaylist());
+      playAllBtn.addEventListener("click", (e) => {
+        e.preventDefault();
+        this.playPlaylist();
+      });
     }
 
-    // Play playlist button (alternative)
-    const playPlaylistBtn = document.getElementById("playPlaylistBtn");
-    if (playPlaylistBtn) {
-      playPlaylistBtn.addEventListener("click", () => this.playPlaylist());
+    // Edit Playlist button
+    const editBtn = document.getElementById("editPlaylistBtn");
+    if (editBtn) {
+      editBtn.addEventListener("click", (e) => {
+        e.preventDefault();
+        this.showEditPlaylistModal();
+      });
+    }
+
+    // Delete Playlist button
+    const deleteBtn = document.getElementById("deletePlaylistBtn");
+    if (deleteBtn) {
+      deleteBtn.addEventListener("click", (e) => {
+        e.preventDefault();
+        this.showDeletePlaylistModal();
+      });
+    }
+
+    // Add Songs button
+    const addSongsBtn = document.getElementById("addSongsBtn");
+    if (addSongsBtn) {
+      addSongsBtn.addEventListener("click", (e) => {
+        e.preventDefault();
+        this.showAddSongsModal();
+      });
     }
 
     // Individual play buttons
@@ -118,6 +145,39 @@ class PlaylistDetailManager {
       }
     });
 
+    // Remove from playlist buttons
+    document.addEventListener("click", (e) => {
+      const removeBtn = e.target.closest(".remove-from-playlist");
+      if (removeBtn) {
+        e.preventDefault();
+        e.stopPropagation();
+        this.handleRemoveFromPlaylist(removeBtn);
+        return;
+      }
+    });
+
+    // Add to playlist buttons in submenu
+    document.addEventListener("click", (e) => {
+      const addBtn = e.target.closest(".add-to-playlist");
+      if (addBtn && !addBtn.classList.contains("disabled")) {
+        e.preventDefault();
+        e.stopPropagation();
+        this.handleAddToPlaylist(addBtn);
+        return;
+      }
+    });
+
+    // Create playlist buttons
+    document.addEventListener("click", (e) => {
+      const createBtn = e.target.closest(".create-playlist");
+      if (createBtn) {
+        e.preventDefault();
+        e.stopPropagation();
+        this.handleCreatePlaylist(createBtn);
+        return;
+      }
+    });
+
     // Submenu triggers
     document.addEventListener("click", (e) => {
       const submenuTrigger = e.target.closest(".submenu-trigger");
@@ -129,35 +189,6 @@ class PlaylistDetailManager {
       }
     });
 
-    // Add to playlist buttons in submenu
-    document
-      .querySelectorAll(".submenu .add-to-playlist:not(.disabled)")
-      .forEach((button) => {
-        button.addEventListener("click", (e) => {
-          e.preventDefault();
-          e.stopPropagation();
-          this.handleAddToPlaylist(button);
-        });
-      });
-
-    // Create playlist buttons
-    document.querySelectorAll(".create-playlist").forEach((button) => {
-      button.addEventListener("click", (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        this.handleCreatePlaylist(button);
-      });
-    });
-
-    // Remove from playlist buttons
-    document.querySelectorAll(".remove-from-playlist").forEach((button) => {
-      button.addEventListener("click", (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        this.handleRemoveFromPlaylist(button);
-      });
-    });
-
     // Escape key to close dropdowns and modals
     document.addEventListener("keydown", (e) => {
       if (e.key === "Escape") {
@@ -165,6 +196,16 @@ class PlaylistDetailManager {
         this.closeAllModals();
       }
     });
+
+    // Auto-hide notifications
+    setTimeout(() => {
+      document
+        .querySelectorAll(".notification.show")
+        .forEach((notification) => {
+          notification.classList.remove("show");
+          setTimeout(() => notification.remove(), 300);
+        });
+    }, 3000);
   }
 
   setupModalHandlers() {
@@ -179,6 +220,40 @@ class PlaylistDetailManager {
         this.closeAllModals();
       }
     });
+  }
+
+  setupFormHandlers() {
+    // Edit playlist form - AJAX submission
+    const editForm = document.getElementById("editPlaylistForm");
+    if (editForm) {
+      editForm.addEventListener("submit", (e) => {
+        e.preventDefault();
+        this.handleEditPlaylistForm();
+      });
+    }
+
+    // Delete playlist form
+    const deleteForm = document.getElementById("deletePlaylistForm");
+    if (deleteForm) {
+      deleteForm.addEventListener("submit", (e) => {
+        // Let it submit normally, we'll show a loading state
+        const submitBtn = deleteForm.querySelector('button[type="submit"]');
+        if (submitBtn) {
+          submitBtn.innerHTML =
+            '<i class="fas fa-spinner fa-spin"></i> Deleting...';
+          submitBtn.disabled = true;
+        }
+      });
+    }
+
+    // Remove song form - AJAX submission
+    const removeForm = document.getElementById("removeSongForm");
+    if (removeForm) {
+      removeForm.addEventListener("submit", (e) => {
+        e.preventDefault();
+        this.handleRemoveSongForm();
+      });
+    }
 
     // Create playlist form
     const createForm = document.getElementById("createPlaylistForm");
@@ -186,15 +261,6 @@ class PlaylistDetailManager {
       createForm.addEventListener("submit", (e) => {
         e.preventDefault();
         this.handleCreatePlaylistForm();
-      });
-    }
-
-    // Remove song form
-    const removeForm = document.getElementById("removeSongForm");
-    if (removeForm) {
-      removeForm.addEventListener("submit", (e) => {
-        e.preventDefault();
-        this.handleRemoveSongForm();
       });
     }
   }
@@ -223,9 +289,47 @@ class PlaylistDetailManager {
     }
   }
 
-  //  PLAYBACK
+  // MODAL FUNCTIONS
+  showModal(modal) {
+    if (!modal) return;
+
+    this.closeAllModals();
+    modal.classList.add("show");
+    document.body.style.overflow = "hidden";
+  }
+
+  closeAllModals() {
+    document.querySelectorAll(".modal").forEach((modal) => {
+      modal.classList.remove("show");
+    });
+    document.body.style.overflow = "";
+  }
+
+  showEditPlaylistModal() {
+    const modal = document.getElementById("editPlaylistModal");
+    this.showModal(modal);
+  }
+
+  showDeletePlaylistModal() {
+    const modal = document.getElementById("deletePlaylistModal");
+    this.showModal(modal);
+  }
+
+  showAddSongsModal() {
+    const modal = document.getElementById("addSongsModal");
+    this.showModal(modal);
+    setTimeout(() => {
+      const searchInput = document.getElementById("searchSongsInput");
+      if (searchInput) searchInput.focus();
+    }, 100);
+  }
+
+  // PLAYBACK FUNCTIONS
   async playPlaylist() {
-    if (!this.playlistId) return;
+    if (!this.playlistId) {
+      this.showNotification("Playlist ID not found", "error");
+      return;
+    }
 
     if (window.musicPlayer) {
       await window.musicPlayer.playPlaylist(this.playlistId);
@@ -244,7 +348,87 @@ class PlaylistDetailManager {
     }
   }
 
-  //  DROPDOWNS
+  // FORM HANDLERS
+  async handleEditPlaylistForm() {
+    const form = document.getElementById("editPlaylistForm");
+    const formData = new FormData(form);
+    const title = formData.get("title");
+    const description = formData.get("description");
+
+    if (!title.trim()) {
+      this.showNotification("Please enter a playlist title", "error");
+      return;
+    }
+
+    try {
+      const response = await fetch("api/playlists.php", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          action: "update",
+          playlist_id: this.playlistId,
+          title: title,
+          description: description,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        this.showNotification(data.message || "Playlist updated successfully");
+        this.closeAllModals();
+
+        if (data.redirect) {
+          setTimeout(() => {
+            window.location.href = data.redirect;
+          }, 1000);
+        } else {
+          setTimeout(() => {
+            window.location.reload();
+          }, 1000);
+        }
+      } else {
+        this.showNotification(
+          data.message || "Failed to update playlist",
+          "error"
+        );
+      }
+    } catch (error) {
+      console.error("Edit playlist error:", error);
+      this.showNotification("Error updating playlist", "error");
+    }
+  }
+
+  async handleRemoveSongForm() {
+    const form = document.getElementById("removeSongForm");
+    const formData = new FormData(form);
+
+    try {
+      const response = await fetch("api/playlists.php", {
+        method: "POST",
+        body: formData,
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        this.showNotification(data.message || "Song removed from playlist");
+        this.closeAllModals();
+        setTimeout(() => {
+          window.location.reload();
+        }, 1000);
+      } else {
+        this.showNotification(data.message || "Failed to remove song", "error");
+      }
+    } catch (error) {
+      console.error("Remove song error:", error);
+      this.showNotification("Error removing song", "error");
+    }
+  }
+
+  // DROPDOWN FUNCTIONS
   toggleSongDropdown(button) {
     const songId = button.getAttribute("data-song-id");
     let dropdown;
@@ -272,20 +456,17 @@ class PlaylistDetailManager {
     } else {
       this.closeAllDropdowns();
 
-      // Position dropdown
       const rect = button.getBoundingClientRect();
       dropdown.style.display = "block";
       dropdown.classList.add("show");
       dropdown.style.position = "fixed";
       dropdown.style.zIndex = "10000";
 
-      // Position to the LEFT by default
       const dropdownWidth = dropdown.offsetWidth;
       const viewportWidth = window.innerWidth;
 
       let leftPosition = rect.left - dropdownWidth + 10;
 
-      // If dropdown goes off screen on left, position to right
       if (leftPosition < 10) {
         leftPosition = rect.right - 10;
       }
@@ -310,20 +491,16 @@ class PlaylistDetailManager {
       this.closeSubmenu();
       this.activeSubmenu = submenu;
 
-      // Position submenu
       const rect = button.getBoundingClientRect();
       const submenuWidth = submenu.offsetWidth;
-      const viewportWidth = window.innerWidth;
 
       submenu.style.display = "block";
       submenu.style.position = "fixed";
       submenu.style.zIndex = "10001";
 
-      // Position to the LEFT on desktop
       if (window.innerWidth > 768) {
         let leftPosition = rect.left - submenuWidth;
 
-        // If submenu goes off screen on left, position to right
         if (leftPosition < 10) {
           leftPosition = rect.right + 10;
         }
@@ -331,7 +508,6 @@ class PlaylistDetailManager {
         submenu.style.top = `${rect.top}px`;
         submenu.style.left = `${leftPosition}px`;
       } else {
-        // On mobile, position below
         submenu.style.top = `${rect.bottom + 5}px`;
         submenu.style.left = `${rect.left}px`;
         submenu.style.maxHeight = "200px";
@@ -356,7 +532,7 @@ class PlaylistDetailManager {
     this.closeSubmenu();
   }
 
-  //  LIKES
+  // BUTTON HANDLERS
   async handleLikeButton(button) {
     const songId = button.getAttribute("data-song-id");
     if (!songId) return;
@@ -384,7 +560,6 @@ class PlaylistDetailManager {
       const data = await response.json();
 
       if (data.success) {
-        // Update dropdown button
         if (button.classList.contains("like-song")) {
           if (isLiked) {
             button.innerHTML = '<i class="far fa-heart"></i> Like';
@@ -408,7 +583,6 @@ class PlaylistDetailManager {
     }
   }
 
-  //  QUEUE
   async handleAddToQueue(button) {
     const songId = button.getAttribute("data-song-id");
     const songItem = button.closest(".song-item");
@@ -431,7 +605,6 @@ class PlaylistDetailManager {
     this.closeAllDropdowns();
   }
 
-  //  PLAYLIST OPERATIONS
   async handleAddToPlaylist(button) {
     const songId = button.getAttribute("data-song-id");
     const playlistId = button.getAttribute("data-playlist-id");
@@ -483,25 +656,25 @@ class PlaylistDetailManager {
     this.closeAllDropdowns();
   }
 
-  async handleRemoveFromPlaylist(button) {
+  handleRemoveFromPlaylist(button) {
     const songId = button.getAttribute("data-song-id");
-    const playlistId = button.getAttribute("data-playlist-id");
-    const songItem = button.closest(".song-item");
-    const songTitle = songItem
-      ? songItem.querySelector(".song-info h4").textContent
-      : "Song";
-
-    // Show confirmation modal
+    const playlistId =
+      button.getAttribute("data-playlist-id") || this.playlistId;
     const modal = document.getElementById("removeSongModal");
     const songIdInput = document.getElementById("removeSongId");
 
     if (modal && songIdInput) {
       songIdInput.value = songId;
+      const playlistIdInput = modal.querySelector('input[name="playlist_id"]');
+      if (playlistIdInput) {
+        playlistIdInput.value = playlistId;
+      }
       this.showModal(modal);
     }
+    this.closeAllDropdowns();
   }
 
-  //  SEARCH
+  // SEARCH FUNCTIONS
   async searchSongs(query) {
     try {
       const response = await fetch(
@@ -525,7 +698,7 @@ class PlaylistDetailManager {
     const container = document.getElementById("searchResults");
     if (!container) return;
 
-    if (results.length === 0) {
+    if (!results || results.length === 0) {
       container.innerHTML = '<div class="search-message">No songs found</div>';
       return;
     }
@@ -541,15 +714,24 @@ class PlaylistDetailManager {
                     <h4>${this.escapeHtml(song.title)}</h4>
                     <p>${this.escapeHtml(song.artist_name)}</p>
                 </div>
-                <button class="add-song-btn" onclick="window.playlistDetailManager.addSongToPlaylist(${
+                <button class="add-song-btn" data-song-id="${
                   song.id
-                }, '${this.escapeHtml(song.title)}')">
+                }" data-song-title="${this.escapeHtml(song.title)}">
                     <i class="fas fa-plus"></i> Add
                 </button>
             </div>
         `
       )
       .join("");
+
+    container.querySelectorAll(".add-song-btn").forEach((btn) => {
+      btn.addEventListener("click", (e) => {
+        e.preventDefault();
+        const songId = btn.getAttribute("data-song-id");
+        const songTitle = btn.getAttribute("data-song-title");
+        this.addSongToPlaylist(songId, songTitle);
+      });
+    });
   }
 
   clearSearchResults() {
@@ -586,7 +768,7 @@ class PlaylistDetailManager {
 
       if (data.success) {
         this.showNotification(`"${songTitle}" added to playlist`);
-        // Reload page to show updated playlist
+        this.closeAllModals();
         setTimeout(() => {
           window.location.reload();
         }, 1000);
@@ -597,32 +779,6 @@ class PlaylistDetailManager {
       console.error("Add song error:", error);
       this.showNotification("Error adding song", "error");
     }
-  }
-
-  //  MODALS
-  showModal(modal) {
-    if (!modal) return;
-
-    this.closeAllModals();
-    modal.classList.add("show");
-    document.body.style.overflow = "hidden";
-  }
-
-  closeAllModals() {
-    document.querySelectorAll(".modal").forEach((modal) => {
-      modal.classList.remove("show");
-    });
-    document.body.style.overflow = "";
-  }
-
-  showEditPlaylistModal() {
-    const modal = document.getElementById("editPlaylistModal");
-    this.showModal(modal);
-  }
-
-  showAddSongsModal() {
-    const modal = document.getElementById("addSongsModal");
-    this.showModal(modal);
   }
 
   async handleCreatePlaylistForm() {
@@ -639,28 +795,25 @@ class PlaylistDetailManager {
     try {
       const response = await fetch("api/playlists.php", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          action: "create",
-          title: title,
-          description: formData.get("description"),
-          song_id: songId ? parseInt(songId) : null,
-        }),
+        body: formData,
       });
 
       const data = await response.json();
 
       if (data.success) {
-        this.showNotification(`Playlist "${title}" created successfully`);
+        this.showNotification(data.message || "Playlist created successfully");
         this.closeAllModals();
         form.reset();
 
-        // Reload page after a delay
-        setTimeout(() => {
+        if (data.redirect) {
+          setTimeout(() => {
+            window.location.href = data.redirect;
+          }, 1000);
+        } else if (data.playlist_id) {
+          window.location.href = `playlist_detail.php?id=${data.playlist_id}`;
+        } else {
           window.location.reload();
-        }, 1500);
+        }
       } else {
         this.showNotification(
           data.message || "Error creating playlist",
@@ -673,50 +826,11 @@ class PlaylistDetailManager {
     }
   }
 
-  async handleRemoveSongForm() {
-    const form = document.getElementById("removeSongForm");
-    const formData = new FormData(form);
-    const songId = formData.get("song_id");
-    const playlistId = formData.get("playlist_id");
-
-    try {
-      const response = await fetch("api/playlists.php", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          action: "remove_song",
-          playlist_id: parseInt(playlistId),
-          song_id: parseInt(songId),
-        }),
-      });
-
-      const data = await response.json();
-
-      if (data.success) {
-        this.showNotification("Song removed from playlist");
-        this.closeAllModals();
-
-        // Reload page to show updated playlist
-        setTimeout(() => {
-          window.location.reload();
-        }, 1000);
-      } else {
-        this.showNotification(data.message || "Error removing song", "error");
-      }
-    } catch (error) {
-      console.error("Remove song error:", error);
-      this.showNotification("Error removing song", "error");
-    }
-  }
-
-  //  UTILITY FUNCTIONS
+  // UTILITY FUNCTIONS
   showNotification(message, type = "success") {
     if (window.musicPlayer && window.musicPlayer.showNotification) {
       window.musicPlayer.showNotification(message, type);
     } else {
-      // Fallback notification
       console.log(`${type}: ${message}`);
       const notification = document.createElement("div");
       notification.className = `notification notification-${type} show`;
@@ -758,7 +872,7 @@ class PlaylistDetailManager {
   }
 }
 
-//  GLOBAL INITIALIZATION
+// GLOBAL INITIALIZATION
 document.addEventListener("DOMContentLoaded", () => {
   window.playlistDetailManager = new PlaylistDetailManager();
 });

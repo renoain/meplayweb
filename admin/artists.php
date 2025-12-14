@@ -394,6 +394,7 @@ function resizeImage($file_path, $max_width, $max_height) {
     <link rel="stylesheet" href="assets/css/admin-main.css">
     <link rel="stylesheet" href="assets/css/admin-artists.css">
     <link rel="stylesheet" href="assets/css/sidebar.css">
+    <link rel="stylesheet" href="assets/css/modal-delete.css">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
 </head>
 <body>
@@ -563,11 +564,16 @@ function resizeImage($file_path, $max_width, $max_height) {
                                                                class="btn btn-sm btn-outline" title="Edit">
                                                                 <i class="fas fa-edit"></i>
                                                             </a>
-                                                            <button onclick="confirmDelete(<?php echo $artist['id']; ?>)" 
-                                                                    class="btn btn-sm btn-danger" title="Hapus"
-                                                                    <?php echo ($artist['songs_count'] > 0) ? 'disabled' : ''; ?>>
-                                                                <i class="fas fa-trash"></i>
-                                                            </button>
+                                                           <button class="btn btn-sm btn-danger" title="Hapus"
+                                                                data-delete-type="artist"
+                                                                data-delete-id="<?php echo $artist['id']; ?>"
+                                                                data-delete-name="<?php echo htmlspecialchars($artist['name']); ?>"
+                                                                data-delete-additional="<?php echo $artist['songs_count']; ?> lagu"
+                                                                data-delete-url="artists.php?action=delete&id=<?php echo $artist['id']; ?>"
+                                                                data-warning="<?php echo $artist['songs_count'] > 0 ? 'Artis ini memiliki lagu. Hapus lagu terlebih dahulu.' : ''; ?>"
+                                                                <?php echo ($artist['songs_count'] > 0) ? 'disabled' : ''; ?>>
+                                                            <i class="fas fa-trash"></i>
+                                                        </button>
                                                         </div>
                                                     </td>
                                                 </tr>
@@ -591,5 +597,7 @@ function resizeImage($file_path, $max_width, $max_height) {
 
     <script src="assets/js/admin-main.js"></script>
     <script src="assets/js/admin-artists.js"></script>
+    <script src="assets/js/modal-delete.js"></script>
+    <script src="assets/js/delete-helpers.js"></script>
 </body>
 </html>

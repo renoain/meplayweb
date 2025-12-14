@@ -47,16 +47,19 @@
                 <span>Genre</span>
             </a>
         </li>
+        
+         <li class="menu-item <?php echo $current_page == '../index.php' ? 'active' : ''; ?>">
+            <a href="../index.php">
+                <i class="fas fa-globe"></i>
+                <span>Website</span>
+            </a>
+        </li>
+
+         <li class="menu-item <?php echo $current_page == '../logout.php' ? 'active' : ''; ?>">
+            <a href="../logout.php">
+                <i class="fa-solid fa-right-from-bracket"></i>
+                <span>Log out</span>
+            </a>
+        </li>
     </ul>
-    
-    <div class="sidebar-footer">
-        <a href="../index.php" class="sidebar-link" target="_blank">
-            <i class="fas fa-external-link-alt"></i>
-            <span>Ke Website</span>
-        </a>
-        <a href="../logout.php" class="sidebar-link logout">
-            <i class="fas fa-sign-out-alt"></i>
-            <span>Logout</span>
-        </a>
-    </div>
 </nav>

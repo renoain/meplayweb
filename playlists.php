@@ -377,6 +377,7 @@ $playlists = $stmt->fetchAll(PDO::FETCH_ASSOC);
     <script src="assets/js/player.js"></script>
     <script src="assets/js/header-search.js"></script>
     <script src="assets/js/likes.js"></script>
+    <script src="assets/js/playlists.js"></script>
 
     <script>
      let playlistToDelete = null;

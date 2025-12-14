@@ -500,6 +500,7 @@ function getYearValue($edit_album, $post_data) {
     <link rel="stylesheet" href="assets/css/admin-main.css">
     <link rel="stylesheet" href="assets/css/admin-albums.css">
     <link rel="stylesheet" href="assets/css/sidebar.css">
+    <link rel="stylesheet" href="assets/css/modal-delete.css">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
 </head>
 <body>
@@ -710,11 +711,16 @@ function getYearValue($edit_album, $post_data) {
                                                                class="btn btn-sm btn-outline" title="Edit">
                                                                 <i class="fas fa-edit"></i>
                                                             </a>
-                                                            <button onclick="confirmDelete(<?php echo $album['id']; ?>)" 
-                                                                    class="btn btn-sm btn-danger" title="Hapus"
-                                                                    <?php echo $album['songs_count'] > 0 ? 'disabled' : ''; ?>>
-                                                                <i class="fas fa-trash"></i>
-                                                            </button>
+                                                                <button class="btn btn-sm btn-danger" title="Hapus"
+                                                                        data-delete-type="album"
+                                                                        data-delete-id="<?php echo $album['id']; ?>"
+                                                                        data-delete-name="<?php echo htmlspecialchars($album['title']); ?>"
+                                                                        data-delete-additional="<?php echo $album['songs_count']; ?> lagu"
+                                                                        data-delete-url="albums.php?action=delete&id=<?php echo $album['id']; ?>"
+                                                                        data-warning="<?php echo $album['songs_count'] > 0 ? 'Album ini memiliki lagu. Hapus lagu terlebih dahulu.' : ''; ?>"
+                                                                        <?php echo $album['songs_count'] > 0 ? 'disabled' : ''; ?>>
+                                                                    <i class="fas fa-trash"></i>
+                                                                </button>
                                                         </div>
                                                     </td>
                                                 </tr>
@@ -738,5 +744,7 @@ function getYearValue($edit_album, $post_data) {
 
     <script src="assets/js/admin-main.js"></script>
     <script src="assets/js/admin-albums.js"></script>
+    <script src="assets/js/modal-delete.js"></script>
+    <script src="assets/js/delete-helpers.js"></script>
 </body>
 </html>

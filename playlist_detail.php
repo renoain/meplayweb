@@ -1,5 +1,6 @@
 <?php
- require_once 'config/constants.php';
+// playlist_detail.php (UPDATE existing file)
+require_once 'config/constants.php';
 require_once 'config/auth.php';
 require_once 'config/functions.php';
 
@@ -67,19 +68,60 @@ $user_playlists = $playlists_stmt->fetchAll(PDO::FETCH_ASSOC);
 $error_message = '';
 $success_message = '';
 
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['remove_song'])) {
-    $song_id = intval($_POST['song_id']);
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    if (isset($_POST['remove_song'])) {
+        $song_id = intval($_POST['song_id']);
+        
+        $delete_query = "DELETE FROM playlist_songs WHERE playlist_id = ? AND song_id = ?";
+        $delete_stmt = $conn->prepare($delete_query);
+        
+        if ($delete_stmt->execute([$playlist_id, $song_id])) {
+            $success_message = "Song removed from playlist";
+            header("Location: playlist_detail.php?id=" . $playlist_id . "&success=" . urlencode($success_message));
+            exit();
+        } else {
+            $error_message = "Failed to remove song";
+        }
+    }
     
-    $delete_query = "DELETE FROM playlist_songs WHERE playlist_id = ? AND song_id = ?";
-    $delete_stmt = $conn->prepare($delete_query);
-    
-    if ($delete_stmt->execute([$playlist_id, $song_id])) {
-        $success_message = "Song removed from playlist";
-        // Redirect with success message
-        header("Location: playlist_detail.php?id=" . $playlist_id . "&success=" . urlencode($success_message));
-        exit();
-    } else {
-        $error_message = "Failed to remove song";
+    // Handle delete playlist - TAMBAH INI
+    if (isset($_POST['delete_playlist'])) {
+        $delete_playlist_id = intval($_POST['playlist_id']);
+        
+        // Verify ownership
+        $check_query = "SELECT * FROM playlists WHERE id = ? AND user_id = ?";
+        $check_stmt = $conn->prepare($check_query);
+        $check_stmt->execute([$delete_playlist_id, $user_id]);
+        
+        if ($check_stmt->rowCount() > 0) {
+            try {
+                $conn->beginTransaction();
+                
+                // Delete all songs from playlist
+                $delete_songs = "DELETE FROM playlist_songs WHERE playlist_id = ?";
+                $delete_songs_stmt = $conn->prepare($delete_songs);
+                $delete_songs_stmt->execute([$delete_playlist_id]);
+                
+                // Delete playlist
+                $delete_playlist = "DELETE FROM playlists WHERE id = ? AND user_id = ?";
+                $delete_playlist_stmt = $conn->prepare($delete_playlist);
+                
+                if ($delete_playlist_stmt->execute([$delete_playlist_id, $user_id])) {
+                    $conn->commit();
+                    $success_message = "Playlist deleted successfully!";
+                    header("Location: playlists.php?success=" . urlencode($success_message));
+                    exit();
+                } else {
+                    $conn->rollBack();
+                    $error_message = "Failed to delete playlist";
+                }
+            } catch (Exception $e) {
+                $conn->rollBack();
+                $error_message = "Error: " . $e->getMessage();
+            }
+        } else {
+            $error_message = "Playlist not found or access denied";
+        }
     }
 }
 
@@ -101,15 +143,14 @@ if (isset($_GET['success'])) {
     <link rel="stylesheet" href="assets/css/playlist_detail.css">
     <link rel="stylesheet" href="assets/css/header-search.css">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-    
 </head>
 <body data-theme="<?php echo getCurrentTheme(); ?>">
-     <?php include 'includes/sidebar.php'; ?>
+    <?php include 'includes/sidebar.php'; ?>
     
-     <div class="main-content">
-         <?php include 'includes/header.php'; ?>
+    <div class="main-content">
+        <?php include 'includes/header.php'; ?>
         
-         <div class="content">
+        <div class="content">
             <!-- Notifications -->
             <?php if ($error_message): ?>
                 <div class="notification notification-error show">
@@ -157,132 +198,107 @@ if (isset($_GET['success'])) {
                         <i class="fas fa-play"></i>
                         Play All
                     </button>
-                    <button class="btn-secondary" onclick="playlistDetailManager.showEditPlaylistModal()">
+                    <button class="btn-secondary" id="editPlaylistBtn">
                         <i class="fas fa-edit"></i>
                         Edit
+                    </button>
+                    <button class="btn-danger" id="deletePlaylistBtn">
+                        <i class="fas fa-trash"></i>
+                        Delete
                     </button>
                 </div>
             </div>
 
             <!-- Songs Section -->
-                <?php if (count($songs) > 0): ?>
-                <div class="songs-list">
-                    <?php foreach ($songs as $index => $song): ?>
-                    <div class="song-item" data-song-id="<?php echo $song['id']; ?>" data-index="<?php echo $index; ?>">
-                        <div class="song-cover">
-                            <img src="<?php echo getCoverPath($song['cover_image'], 'song'); ?>" 
-                                 alt="<?php echo htmlspecialchars($song['title']); ?>"
-                                 onerror="this.src='assets/images/covers/default-cover.png'">
-                            <button class="play-btn" data-song-id="<?php echo $song['id']; ?>">
-                                <i class="fas fa-play"></i>
-                            </button>
-                        </div>
-                        
-                        <div class="song-info">
-                            <h4><?php echo htmlspecialchars($song['title']); ?></h4>
-                            <p><?php echo htmlspecialchars($song['artist_name']); ?></p>
-                        </div>
-                        
-                        <div class="song-duration"><?php echo formatDuration($song['duration']); ?></div>
-                        
-                        <div class="song-actions">
-                            <button class="more-btn" data-song-id="<?php echo $song['id']; ?>">
-                                <i class="fas fa-ellipsis-v"></i>
-                            </button>
-                            
-                            <!-- Dropdown Menu -->
-                            <div class="song-dropdown" id="dropdown-<?php echo $song['id']; ?>">
-                                <button class="dropdown-item like-song <?php echo $song['is_liked'] ? 'liked text-danger' : ''; ?>" 
-                                        data-song-id="<?php echo $song['id']; ?>">
-                                    <i class="<?php echo $song['is_liked'] ? 'fas' : 'far'; ?> fa-heart"></i> 
-                                    <?php echo $song['is_liked'] ? 'Unlike' : 'Like'; ?>
-                                </button>
-                                
-                                <button class="dropdown-item add-to-queue" data-song-id="<?php echo $song['id']; ?>">
-                                    <i class="fas fa-list"></i> Add to Queue
-                                </button>
-                                
-                                <div class="dropdown-submenu">
-                                    <button class="dropdown-item submenu-trigger">
-                                        <i class="fas fa-plus"></i> Add to Playlist
-                                        <i class="fas fa-chevron-right"></i>
-                                    </button>
-                                    <div class="submenu">
-                                        <?php if ($user_playlists): ?>
-                                            <?php foreach ($user_playlists as $playlist_item): ?>
-                                                <button class="dropdown-item add-to-playlist" 
-                                                        data-song-id="<?php echo $song['id']; ?>" 
-                                                        data-playlist-id="<?php echo $playlist_item['id']; ?>">
-                                                    <?php echo htmlspecialchars($playlist_item['title']); ?>
-                                                </button>
-                                            <?php endforeach; ?>
-                                        <?php else: ?>
-                                            <button class="dropdown-item disabled">No other playlists</button>
-                                        <?php endif; ?>
-                                        <button class="dropdown-item create-playlist" data-song-id="<?php echo $song['id']; ?>">
-                                            <i class="fas fa-plus-circle"></i> Create New Playlist
-                                        </button>
-                                    </div>
-                                </div>
-                                
-                                <button class="dropdown-item remove-from-playlist" 
-                                        data-song-id="<?php echo $song['id']; ?>"
-                                        data-playlist-id="<?php echo $playlist_id; ?>">
-                                    <i class="fas fa-minus-circle"></i> Remove from Playlist
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                    <?php endforeach; ?>
-                </div>
-                <?php else: ?>
-                <div class="no-songs">
-                    <div class="no-songs-content">
-                        <i class="fas fa-music fa-4x"></i>
-                        <h2>No songs in this playlist</h2>
-                        <p>Add songs to get started</p>
-                        <button class="btn-primary" onclick="playlistDetailManager.showAddSongsModal()">
-                            <i class="fas fa-plus"></i>
-                            Add Songs
+            <?php if (count($songs) > 0): ?>
+            <div class="songs-list">
+                <?php foreach ($songs as $index => $song): ?>
+                <div class="song-item" data-song-id="<?php echo $song['id']; ?>" data-index="<?php echo $index; ?>">
+                    <div class="song-cover">
+                        <img src="<?php echo getCoverPath($song['cover_image'], 'song'); ?>" 
+                             alt="<?php echo htmlspecialchars($song['title']); ?>"
+                             onerror="this.src='assets/images/covers/default-cover.png'">
+                        <button class="play-btn" data-song-id="<?php echo $song['id']; ?>">
+                            <i class="fas fa-play"></i>
                         </button>
                     </div>
+                    
+                    <div class="song-info">
+                        <h4><?php echo htmlspecialchars($song['title']); ?></h4>
+                        <p><?php echo htmlspecialchars($song['artist_name']); ?></p>
+                    </div>
+                    
+                    <div class="song-duration"><?php echo formatDuration($song['duration']); ?></div>
+                    
+                    <div class="song-actions">
+                        <button class="more-btn" data-song-id="<?php echo $song['id']; ?>">
+                            <i class="fas fa-ellipsis-v"></i>
+                        </button>
+                        
+                        <!-- Dropdown Menu -->
+                        <div class="song-dropdown" id="dropdown-<?php echo $song['id']; ?>">
+                            <button class="dropdown-item like-song <?php echo $song['is_liked'] ? 'liked text-danger' : ''; ?>" 
+                                    data-song-id="<?php echo $song['id']; ?>">
+                                <i class="<?php echo $song['is_liked'] ? 'fas' : 'far'; ?> fa-heart"></i> 
+                                <?php echo $song['is_liked'] ? 'Unlike' : 'Like'; ?>
+                            </button>
+                            
+                            <button class="dropdown-item add-to-queue" data-song-id="<?php echo $song['id']; ?>">
+                                <i class="fas fa-list"></i> Add to Queue
+                            </button>
+                            
+                            <div class="dropdown-submenu">
+                                <button class="dropdown-item submenu-trigger">
+                                    <i class="fas fa-plus"></i> Add to Playlist
+                                    <i class="fas fa-chevron-right"></i>
+                                </button>
+                                <div class="submenu">
+                                    <?php if ($user_playlists): ?>
+                                        <?php foreach ($user_playlists as $playlist_item): ?>
+                                            <button class="dropdown-item add-to-playlist" 
+                                                    data-song-id="<?php echo $song['id']; ?>" 
+                                                    data-playlist-id="<?php echo $playlist_item['id']; ?>">
+                                                <?php echo htmlspecialchars($playlist_item['title']); ?>
+                                            </button>
+                                        <?php endforeach; ?>
+                                    <?php else: ?>
+                                        <button class="dropdown-item disabled">No other playlists</button>
+                                    <?php endif; ?>
+                                    <button class="dropdown-item create-playlist" data-song-id="<?php echo $song['id']; ?>">
+                                        <i class="fas fa-plus-circle"></i> Create New Playlist
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <button class="dropdown-item remove-from-playlist" 
+                                    data-song-id="<?php echo $song['id']; ?>"
+                                    data-playlist-id="<?php echo $playlist_id; ?>">
+                                <i class="fas fa-minus-circle"></i> Remove from Playlist
+                            </button>
+                        </div>
+                    </div>
                 </div>
-                <?php endif; ?>
+                <?php endforeach; ?>
+            </div>
+            <?php else: ?>
+            <div class="no-songs">
+                <div class="no-songs-content">
+                    <i class="fas fa-music fa-4x"></i>
+                    <h2>No songs in this playlist</h2>
+                    <p>Add songs to get started</p>
+                    <button class="btn-primary" id="addSongsBtn">
+                        <i class="fas fa-plus"></i>
+                        Add Songs
+                    </button>
+                </div>
+            </div>
+            <?php endif; ?>
         </div>
     </div>
 
-     <?php include 'includes/player.php'; ?>
+    <?php include 'includes/player.php'; ?>
     
     <!-- Modals -->
-    
-    <!-- Create Playlist Modal -->
-    <div id="createPlaylistModal" class="modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3>Create New Playlist</h3>
-                <button class="close-modal">&times;</button>
-            </div>
-            <div class="modal-body">
-                <form id="createPlaylistForm">
-                    <div class="form-group">
-                        <label for="playlistTitle">Playlist Title *</label>
-                        <input type="text" id="playlistTitle" name="title" required 
-                               placeholder="Enter playlist name">
-                    </div>
-                    <div class="form-group">
-                        <label for="playlistDescription">Description (Optional)</label>
-                        <textarea id="playlistDescription" name="description" 
-                                  placeholder="Describe your playlist..." rows="3"></textarea>
-                    </div>
-                    <input type="hidden" id="songIdForPlaylist" name="song_id">
-                    <div class="form-actions">
-                        <button type="button" class="btn-secondary close-modal">Cancel</button>
-                        <button type="submit" class="btn-primary">Create Playlist</button>
-                    </div>
-                </form>
-            </div>
-        </div>
-    </div>
     
     <!-- Edit Playlist Modal -->
     <div id="editPlaylistModal" class="modal">
@@ -292,7 +308,7 @@ if (isset($_GET['success'])) {
                 <button class="close-modal">&times;</button>
             </div>
             <div class="modal-body">
-                <form id="editPlaylistForm" method="POST" action="api/playlists.php">
+                <form id="editPlaylistForm">
                     <div class="form-group">
                         <label for="editPlaylistTitle">Playlist Title *</label>
                         <input type="text" id="editPlaylistTitle" name="title" required 
@@ -305,7 +321,31 @@ if (isset($_GET['success'])) {
                     <input type="hidden" name="playlist_id" value="<?php echo $playlist_id; ?>">
                     <input type="hidden" name="action" value="update">
                     <div class="form-actions">
-                         <button type="submit" class="btn-primary">Save Changes</button>
+                        <button type="submit" class="btn-primary">Save Changes</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Delete Playlist Confirmation Modal -->
+    <div id="deletePlaylistModal" class="modal confirm-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Delete Playlist</h3>
+                <button class="close-modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="warning-icon">
+                    <i class="fas fa-exclamation-triangle"></i>
+                </div>
+                <p>Are you sure you want to delete <span class="playlist-name">"<?php echo htmlspecialchars($playlist['title']); ?>"</span>?</p>
+                <p class="text-warning">This action cannot be undone. All songs will be removed from this playlist.</p>
+                <form id="deletePlaylistForm" method="POST">
+                    <input type="hidden" name="playlist_id" value="<?php echo $playlist_id; ?>">
+                    <input type="hidden" name="delete_playlist" value="1">
+                    <div class="form-actions">
+                        <button type="submit" class="btn-danger">Delete Playlist</button>
                     </div>
                 </form>
             </div>
@@ -326,10 +366,7 @@ if (isset($_GET['success'])) {
                         <input type="text" id="searchSongsInput" placeholder="Search songs...">
                     </div>
                     <div id="searchResults" class="search-results">
-                     </div>
-                </div>
-                <div class="modal-actions">
-                    <button type="button" class="btn-secondary close-modal">x</button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -360,6 +397,7 @@ if (isset($_GET['success'])) {
     <script src="assets/js/player.js"></script>
     <script src="assets/js/header-search.js"></script>
     <script src="assets/js/likes.js"></script>
+    <script src="assets/js/playlist_detail.js"></script>
 
 </body>
 </html>

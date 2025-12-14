@@ -1,6 +1,4 @@
 <?php
-// File: includes/player.php
-// Ini adalah komponen player yang akan diinclude di setiap halaman
 ?>
 <div class="music-player" id="musicPlayer">
     <audio id="audioElement" preload="metadata"></audio>

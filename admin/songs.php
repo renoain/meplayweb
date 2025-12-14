@@ -480,6 +480,7 @@ function getSelectedValue($field, $edit_song, $post_data, $value) {
     <link rel="stylesheet" href="assets/css/admin-main.css">
     <link rel="stylesheet" href="assets/css/admin-songs.css">
     <link rel="stylesheet" href="assets/css/sidebar.css">
+    <link rel="stylesheet" href="assets/css/modal-delete.css">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
 </head>
 <body>
@@ -804,10 +805,14 @@ function getSelectedValue($field, $edit_song, $post_data, $value) {
                                                                class="btn btn-sm btn-outline" title="Edit">
                                                                 <i class="fas fa-edit"></i>
                                                             </a>
-                                                            <button onclick="confirmDelete(<?php echo $song['id']; ?>)" 
-                                                                    class="btn btn-sm btn-danger" title="Hapus">
-                                                                <i class="fas fa-trash"></i>
-                                                            </button>
+                                                                <button class="btn btn-sm btn-danger" title="Hapus"
+                                                                        data-delete-type="song"
+                                                                        data-delete-id="<?php echo $song['id']; ?>"
+                                                                        data-delete-name="<?php echo htmlspecialchars($song['title']); ?>"
+                                                                        data-delete-url="songs.php?action=delete&id=<?php echo $song['id']; ?>"
+                                                                        data-require-confirm="true">
+                                                                    <i class="fas fa-trash"></i>
+                                                                </button>
                                                         </div>
                                                     </td>
                                                 </tr>
@@ -829,14 +834,11 @@ function getSelectedValue($field, $edit_song, $post_data, $value) {
         </div>
     </div>
 
+    
+
     <script src="assets/js/admin-main.js"></script>
     <script src="assets/js/admin-songs.js"></script>
-    <script>
-    function confirmDelete(songId) {
-        if (confirm('Apakah Anda yakin ingin menghapus lagu ini?')) {
-            window.location.href = 'songs.php?action=delete&id=' + songId;
-        }
-    }
-    </script>
+    <script src="assets/js/modal-delete.js"></script>
+    <script src="assets/js/delete-helpers.js"></script>
 </body>
 </html>

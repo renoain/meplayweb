@@ -1,5 +1,5 @@
 <?php
-// api/playlists.php
+// api/playlists.php (UPDATE existing file)
 header('Content-Type: application/json');
 require_once '../config/constants.php';
 require_once '../config/auth.php';
@@ -21,7 +21,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
         $action = $_GET['action'];
         
         if ($action === 'get_user_playlists') {
-            // Get user's playlists
             $query = "SELECT id, title, description, cover_image, created_at 
                      FROM playlists 
                      WHERE user_id = ? 
@@ -40,7 +39,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
         if ($action === 'get_playlist_songs' && isset($_GET['id'])) {
             $playlist_id = intval($_GET['id']);
             
-            // Verify ownership
             $check_query = "SELECT * FROM playlists WHERE id = ? AND user_id = ?";
             $check_stmt = $conn->prepare($check_query);
             $check_stmt->execute([$playlist_id, $user_id]);
@@ -50,7 +48,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
                 exit();
             }
             
-            // Get songs
             $query = "SELECT s.*, a.name as artist_name 
                      FROM songs s 
                      LEFT JOIN artists a ON s.artist_id = a.id 
@@ -99,7 +96,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if ($stmt->execute([$user_id, $title, $description])) {
                 $playlist_id = $conn->lastInsertId();
                 
-                // Add song if provided
                 if ($song_id) {
                     $add_query = "INSERT INTO playlist_songs (playlist_id, song_id) VALUES (?, ?)";
                     $add_stmt = $conn->prepare($add_query);
@@ -120,6 +116,52 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         exit();
     }
     
+    // Update playlist - TAMBAH INI
+    if ($action === 'update') {
+        $playlist_id = isset($data['playlist_id']) ? intval($data['playlist_id']) : 0;
+        $title = sanitizeInput($data['title'] ?? '');
+        $description = sanitizeInput($data['description'] ?? '');
+        
+        if (!$playlist_id) {
+            echo json_encode(['success' => false, 'message' => 'Invalid playlist ID']);
+            exit();
+        }
+        
+        if (empty($title)) {
+            echo json_encode(['success' => false, 'message' => 'Title is required']);
+            exit();
+        }
+        
+        // Verify ownership
+        $check_query = "SELECT * FROM playlists WHERE id = ? AND user_id = ?";
+        $check_stmt = $conn->prepare($check_query);
+        $check_stmt->execute([$playlist_id, $user_id]);
+        
+        if ($check_stmt->rowCount() === 0) {
+            echo json_encode(['success' => false, 'message' => 'Playlist not found']);
+            exit();
+        }
+        
+        try {
+            $query = "UPDATE playlists SET title = ?, description = ? WHERE id = ? AND user_id = ?";
+            $stmt = $conn->prepare($query);
+            
+            if ($stmt->execute([$title, $description, $playlist_id, $user_id])) {
+                echo json_encode([
+                    'success' => true,
+                    'message' => 'Playlist updated successfully',
+                    'playlist_id' => $playlist_id,
+                    'redirect' => "playlist_detail.php?id=" . $playlist_id
+                ]);
+            } else {
+                echo json_encode(['success' => false, 'message' => 'Failed to update playlist']);
+            }
+        } catch (Exception $e) {
+            echo json_encode(['success' => false, 'message' => 'Error: ' . $e->getMessage()]);
+        }
+        exit();
+    }
+    
     // Add song to playlist
     if ($action === 'add_song') {
         $playlist_id = isset($data['playlist_id']) ? intval($data['playlist_id']) : 0;
@@ -130,7 +172,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             exit();
         }
         
-        // Verify playlist ownership
         $check_query = "SELECT * FROM playlists WHERE id = ? AND user_id = ?";
         $check_stmt = $conn->prepare($check_query);
         $check_stmt->execute([$playlist_id, $user_id]);
@@ -140,7 +181,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             exit();
         }
         
-        // Check if song already in playlist
         $check_song_query = "SELECT * FROM playlist_songs WHERE playlist_id = ? AND song_id = ?";
         $check_song_stmt = $conn->prepare($check_song_query);
         $check_song_stmt->execute([$playlist_id, $song_id]);
@@ -178,7 +218,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             exit();
         }
         
-        // Verify playlist ownership
         $check_query = "SELECT * FROM playlists WHERE id = ? AND user_id = ?";
         $check_stmt = $conn->prepare($check_query);
         $check_stmt->execute([$playlist_id, $user_id]);
@@ -215,7 +254,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             exit();
         }
         
-        // Verify ownership
         $check_query = "SELECT * FROM playlists WHERE id = ? AND user_id = ?";
         $check_stmt = $conn->prepare($check_query);
         $check_stmt->execute([$playlist_id, $user_id]);
@@ -228,12 +266,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         try {
             $conn->beginTransaction();
             
-            // Delete all songs from playlist
             $delete_songs = "DELETE FROM playlist_songs WHERE playlist_id = ?";
             $delete_songs_stmt = $conn->prepare($delete_songs);
             $delete_songs_stmt->execute([$playlist_id]);
             
-            // Delete playlist
             $delete_playlist = "DELETE FROM playlists WHERE id = ? AND user_id = ?";
             $delete_playlist_stmt = $conn->prepare($delete_playlist);
             
@@ -241,7 +277,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $conn->commit();
                 echo json_encode([
                     'success' => true,
-                    'message' => 'Playlist deleted successfully'
+                    'message' => 'Playlist deleted successfully',
+                    'redirect' => "playlists.php"
                 ]);
             } else {
                 $conn->rollBack();

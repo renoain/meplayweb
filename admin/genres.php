@@ -274,6 +274,7 @@ function getFormValue($field, $edit_genre, $post_data) {
     <link rel="stylesheet" href="assets/css/admin-main.css">
     <link rel="stylesheet" href="assets/css/admin-genres.css">
     <link rel="stylesheet" href="assets/css/sidebar.css">
+    <link rel="stylesheet" href="assets/css/modal-delete.css">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
 </head>
 <body>
@@ -393,8 +394,13 @@ function getFormValue($field, $edit_genre, $post_data) {
                                                        class="btn btn-sm btn-outline" title="Edit">
                                                         <i class="fas fa-edit"></i>
                                                     </a>
-                                                    <button onclick="confirmDelete(<?php echo $genre['id']; ?>, '<?php echo addslashes($genre['name']); ?>')" 
-                                                            class="btn btn-sm btn-danger" title="Hapus"
+                                                    <button class="btn btn-sm btn-danger" title="Hapus"
+                                                            data-delete-type="genre"
+                                                            data-delete-id="<?php echo $genre['id']; ?>"
+                                                            data-delete-name="<?php echo htmlspecialchars($genre['name']); ?>"
+                                                            data-delete-additional="<?php echo $genre['songs_count']; ?> lagu"
+                                                            data-delete-url="genres.php?action=delete&id=<?php echo $genre['id']; ?>"
+                                                            data-warning="<?php echo $genre['songs_count'] > 0 ? 'Genre ini digunakan oleh lagu. Ubah genre lagu terlebih dahulu.' : ''; ?>"
                                                             <?php echo $genre['songs_count'] > 0 ? 'disabled' : ''; ?>>
                                                         <i class="fas fa-trash"></i>
                                                     </button>
@@ -436,5 +442,7 @@ function getFormValue($field, $edit_genre, $post_data) {
 
     <script src="assets/js/admin-main.js"></script>
     <script src="assets/js/admin-genres.js"></script>
+    <script src="assets/js/modal-delete.js"></script>
+    <script src="assets/js/delete-helpers.js"></script>
 </body>
 </html>

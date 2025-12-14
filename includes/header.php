@@ -1,12 +1,11 @@
 <?php
-// includes/header.php
-?>
+ ?>
 <style>
 #search-input {
     flex: 1;
     border: none;
     background: transparent;
-    color: #000000; /* GANTI: dari var(--text-primary) ke hitam */
+    color: #000000;  
     font-size: 0.9rem;
     outline: none;
     width: 100%;
@@ -41,8 +40,7 @@
     transform: translateY(0);
 }
 
-/* Spotify-style suggestion items */
-.suggestion-item {
+ .suggestion-item {
     display: flex;
     align-items: center;
     padding: 12px 16px;
@@ -130,7 +128,7 @@
     letter-spacing: 0.5px;
 }
 
-/* View all results button - GANTI WARNA BIRU */
+/* View all results button   */
 .view-all-results {
     padding: 12px 16px;
     text-align: center;
@@ -147,7 +145,7 @@
 
 .view-all-results:hover {
     background-color: var(--bg-hover);
-    color: #007bff; /* GANTI: biru lebih gelap saat hover */
+    color: #007bff; /  */
 }
 
 /* Loading and error states */

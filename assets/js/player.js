@@ -313,7 +313,7 @@ class MusicPlayer {
 
     // Update UI
     this.updateNowPlaying();
-    await this.updateLikeButton(song.id);
+    await this.updateLikeButton(song.id); // PERBAIKAN: Pastikan ini dipanggil
 
     // Set audio source
     const audioPath = `uploads/audio/${song.audio_file}`;
@@ -600,6 +600,13 @@ class MusicPlayer {
         if (repeatBtn) {
           repeatBtn.className = "control-btn";
           repeatBtn.classList.add(`repeat-${this.repeatMode}`);
+        }
+
+        // Update like button state jika ada current song
+        if (this.currentSong && this.currentSong.id) {
+          setTimeout(() => {
+            this.updateLikeButton(this.currentSong.id);
+          }, 500);
         }
 
         // Restore audio if still valid
@@ -891,22 +898,31 @@ class MusicPlayer {
     if (!btn) return;
 
     try {
-      const response = await fetch(`api/likes.php?song_id=${songId}`);
+      // PERBAIKAN: Tambahkan timestamp untuk cache busting
+      const response = await fetch(
+        `api/likes.php?song_id=${songId}&_=${Date.now()}`
+      );
       const data = await response.json();
+
+      console.log("Like status response:", data); // Debug log
 
       if (data.success) {
         if (data.is_liked) {
           btn.innerHTML = '<i class="fas fa-heart"></i>';
           btn.classList.add("liked");
           btn.style.color = "var(--danger-color)";
+          btn.title = "Unlike song";
         } else {
           btn.innerHTML = '<i class="far fa-heart"></i>';
           btn.classList.remove("liked");
           btn.style.color = "var(--text-secondary)";
+          btn.title = "Like song";
         }
+      } else {
+        console.error("Like status error:", data.message);
       }
     } catch (error) {
-      console.error("Like status error:", error);
+      console.error("Like status fetch error:", error);
     }
   }
 
@@ -932,19 +948,26 @@ class MusicPlayer {
       });
 
       const data = await response.json();
+      console.log("Toggle like response:", data); // Debug log
 
       if (data.success) {
         if (isLiked) {
           btn.innerHTML = '<i class="far fa-heart"></i>';
           btn.classList.remove("liked");
           btn.style.color = "var(--text-secondary)";
+          btn.title = "Like song";
           this.showNotification("Removed from liked songs");
         } else {
           btn.innerHTML = '<i class="fas fa-heart"></i>';
           btn.classList.add("liked");
           btn.style.color = "var(--danger-color)";
+          btn.title = "Unlike song";
           this.showNotification("Added to liked songs");
         }
+
+        // PERBAIKAN: Perbarui state currentSong
+        this.currentSong.is_liked = !isLiked;
+        this.saveState();
       } else {
         this.showNotification(data.message || "Error updating like", "error");
       }
@@ -1148,6 +1171,13 @@ function initializeMusicPlayer() {
     // Debug: Check initial volume
     console.log("🔊 Initial volume set to:", player.volume * 100 + "%");
 
+    // PERBAIKAN: Update like button untuk lagu yang sedang diputar
+    setTimeout(() => {
+      if (player.currentSong && player.currentSong.id) {
+        player.updateLikeButton(player.currentSong.id);
+      }
+    }, 1000);
+
     return player;
   } catch (error) {
     console.error(" Player initialization failed:", error);
@@ -1174,6 +1204,15 @@ window.playSong = function (song) {
 window.addToQueue = function (song) {
   if (window.musicPlayerInstance) {
     window.musicPlayerInstance.addToQueue(song);
+  }
+};
+
+// PERBAIKAN: Tambahkan fungsi global untuk update like button
+window.updateCurrentLikeButton = function () {
+  if (window.musicPlayerInstance && window.musicPlayerInstance.currentSong) {
+    window.musicPlayerInstance.updateLikeButton(
+      window.musicPlayerInstance.currentSong.id
+    );
   }
 };
 
