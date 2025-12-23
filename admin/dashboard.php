@@ -68,6 +68,7 @@ try {
     <link rel="stylesheet" href="assets/css/admin-main.css">
     <link rel="stylesheet" href="assets/css/sidebar.css">
     <link rel="stylesheet" href="assets/css/admin-dashboard.css">
+    <link rel="stylesheet" href="assets/css/admin-header.css">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
 </head>
 <body>
@@ -77,18 +78,7 @@ try {
 
         <!-- Main Content -->
         <div class="admin-main">
-            <header class="admin-header">
-                <div class="header-left">
-                    <h1>Dashboard</h1>
-                </div>
-                <div class="header-right">
-                    <div class="user-menu">
-                        <img src="../uploads/users/<?php echo $_SESSION['profile_picture']; ?>" 
-                             alt="Profile" class="user-avatar">
-                        <span><?php echo $_SESSION['username']; ?></span>
-                    </div>
-                </div>
-            </header>
+            <?php include 'includes/admin-header.php'; ?>
 
             <main class="admin-content">
                 <?php if (isset($error)): ?>

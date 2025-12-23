@@ -1,5 +1,6 @@
+ 
 <?php
- require_once 'config/constants.php';
+require_once 'config/constants.php';
 require_once 'config/auth.php';
 
 $auth = new Auth();
@@ -95,8 +96,18 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                         <i class="fas fa-spinner fa-spin"></i>
                     </div>
                 </button>
+                
+                <!-- TAMBAHAN: Tombol Sign Up -->
+                <div class="auth-footer" style="margin-top: 1.5rem; text-align: center;">
+                    <p style="margin-bottom: 1rem; color: #6c757d; font-size: 0.875rem;">
+                        Don't have an account?
+                    </p>
+                    <a href="register.php" class="btn btn-secondary btn-full" style="text-decoration: none;">
+                        <i class="fas fa-user-plus"></i>
+                        Sign Up
+                    </a>
+                </div>
             </form>
-            </div>
         </div>
     </div>
 
@@ -192,6 +203,31 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             transform: none;
             box-shadow: none;
         }
+        
+        /* Style untuk tombol Sign Up */
+        .btn-secondary {
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            border: 1px solid var(--border-color);
+            padding: 12px 20px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            width: 100%;
+        }
+        
+        .btn-secondary:hover {
+            background: var(--bg-tertiary);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
     </style>
 </body>
 </html>
+ 

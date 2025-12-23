@@ -1,0 +1,75 @@
+meplay/
+├── config/
+│   ├── database.php
+│   ├── auth.php
+│   ├── functions.php
+│   └── constants.php
+├── uploads/
+│   ├── audio/
+│   ├── covers/
+│   └── artists/
+├── admin/
+│   ├── assets/
+│   │   ├── css/
+│   │   │   ├── admin-dashboard.css
+│   │   │   ├── admin-artists.css
+│   │   │   ├── admin-genres.css
+│   │   │   ├── admin-main.css
+│   │   │   ├── admin-songs.css
+│   │   │   └── admin-albums.css
+│   │   └── js/
+│   │       ├── admin-artists.js
+│   │       ├── admin-crud.js
+│   │       ├── admin-main.js
+│   │       └── admin-songs.js
+│   ├── includes/
+│   │   └── sidebar.php
+│   ├── dashboard.php
+│   ├── songs.php
+│   ├── artists.php
+│   ├── albums.php
+│   ├── genres.php
+│   └── users.php
+├── assets/
+│   ├── css/
+│   │   ├── auth.css
+│   │   ├── home.css
+│   │   ├── sidebar.css
+│   │   ├── main.css
+│   │   ├── library.css
+│   │   ├── likes.css
+│   │   ├── search.css
+│   │   └── playlists.css
+│   └── js/
+│       ├── main.js
+│       ├── player.js
+│       ├── auth.js
+│       ├── likes.js
+│       ├── library.js
+│       ├── playlists.js
+│       ├── sidebar.js
+│       ├── search.js
+│       └── genre.js
+├── includes/
+│   ├── header.php
+│   ├── sidebar.php
+│   └── player.php
+├── api/
+│   ├── songs.php
+│   ├── artists.php
+│   ├── albums.php
+│   ├── auth.php
+│   ├── likes.php
+│   ├── playlists.php
+│   ├── search.php
+│   └── admin.php
+├── index.php
+├── library.php
+├── search.php
+├── profile.php
+├── playlists.php
+├── login.php
+├── register.php
+├── logout.php
+└── .htaccess
+```
