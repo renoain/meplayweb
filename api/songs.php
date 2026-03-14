@@ -65,7 +65,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             echo json_encode(['success' => false, 'message' => 'Database error']);
         }
     } else {
-        echo json_encode(['success' => false, 'message' => 'No song ID provided']);
+        echo json_encode(['success' => false, 'message' => 'Song ID not found']);
     }
 }
 ?>
